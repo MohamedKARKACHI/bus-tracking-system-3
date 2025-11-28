@@ -1,0 +1,55 @@
+<config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns='http://www.ehcache.org/v3'
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
+
+    <!-- Default cache configuration -->
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="minutes">10</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">100</heap>
+        </resources>
+    </cache-template>
+
+    <!-- Bus cache - frequently accessed -->
+    <cache alias="buses" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">200</heap>
+        </resources>
+    </cache>
+
+    <!-- GPS tracking cache - short-lived for real-time data -->
+    <cache alias="gpsTracking" uses-template="default">
+        <expiry>
+            <ttl unit="seconds">30</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">500</heap>
+        </resources>
+    </cache>
+
+    <!-- User cache -->
+    <cache alias="users" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">15</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">100</heap>
+        </resources>
+    </cache>
+
+    <!-- Latest GPS positions cache -->
+    <cache alias="latestGpsPositions" uses-template="default">
+        <expiry>
+            <ttl unit="seconds">5</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">50</heap>
+        </resources>
+    </cache>
+
+</config>
