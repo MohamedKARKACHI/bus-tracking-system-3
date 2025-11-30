@@ -33,21 +33,30 @@ export default function IncidentsPage() {
         const data = await response.json()
         setIncidents(data)
       } else {
-        // Fallback test data
+        // Comprehensive fallback test data
         setIncidents([
           { id: 'INC-001', type: 'Traffic Delay', severity: 'medium', location: 'Main St & 5th Ave', description: 'Heavy traffic congestion causing 15min delay', time: '2 hours ago', status: 'resolved' },
           { id: 'INC-002', type: 'Vehicle Issue', severity: 'high', location: 'Downtown Terminal', description: 'Bus engine warning light activated', time: '4 hours ago', status: 'pending' },
           { id: 'INC-003', type: 'Passenger Complaint', severity: 'low', location: 'University Stop', description: 'Passenger reported AC malfunction', time: '1 day ago', status: 'resolved' },
           { id: 'INC-004', type: 'Road Closure', severity: 'high', location: 'Highway 101', description: 'Emergency road closure, route diversion required', time: '6 hours ago', status: 'pending' },
+          { id: 'INC-005', type: 'Weather Alert', severity: 'medium', location: 'Coastal Route', description: 'Heavy rain affecting visibility, reduced speed necessary', time: '30 min ago', status: 'pending' },
+          { id: 'INC-006', type: 'Medical Emergency', severity: 'high', location: 'Shopping District', description: 'Passenger required medical assistance, EMS contacted', time: '3 hours ago', status: 'resolved' },
+          { id: 'INC-007', type: 'Mechanical Issue', severity: 'low', location: 'Airport Route', description: 'Door sensor malfunction on rear door', time: '5 hours ago', status: 'resolved' },
+          { id: 'INC-008', type: 'Traffic Accident', severity: 'high', location: 'Business District', description: 'Multi-vehicle accident blocking main route', time: '1 hour ago', status: 'pending' },
         ])
       }
     } catch (error) {
       console.error('Failed to fetch incidents:', error)
-      // Fallback test data
+      // Comprehensive fallback test data
       setIncidents([
         { id: 'INC-001', type: 'Traffic Delay', severity: 'medium', location: 'Main St & 5th Ave', description: 'Heavy traffic congestion causing 15min delay', time: '2 hours ago', status: 'resolved' },
         { id: 'INC-002', type: 'Vehicle Issue', severity: 'high', location: 'Downtown Terminal', description: 'Bus engine warning light activated', time: '4 hours ago', status: 'pending' },
         { id: 'INC-003', type: 'Passenger Complaint', severity: 'low', location: 'University Stop', description: 'Passenger reported AC malfunction', time: '1 day ago', status: 'resolved' },
+        { id: 'INC-004', type: 'Road Closure', severity: 'high', location: 'Highway 101', description: 'Emergency road closure, route diversion required', time: '6 hours ago', status: 'pending' },
+        { id: 'INC-005', type: 'Weather Alert', severity: 'medium', location: 'Coastal Route', description: 'Heavy rain affecting visibility, reduced speed necessary', time: '30 min ago', status: 'pending' },
+        { id: 'INC-006', type: 'Medical Emergency', severity: 'high', location: 'Shopping District', description: 'Passenger required medical assistance, EMS contacted', time: '3 hours ago', status: 'resolved' },
+        { id: 'INC-007', type: 'Mechanical Issue', severity: 'low', location: 'Airport Route', description: 'Door sensor malfunction on rear door', time: '5 hours ago', status: 'resolved' },
+        { id: 'INC-008', type: 'Traffic Accident', severity: 'high', location: 'Business District', description: 'Multi-vehicle accident blocking main route', time: '1 hour ago', status: 'pending' },
       ])
     } finally {
       setLoading(false)

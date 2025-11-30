@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
     const user = users[0]
     console.log('✅ User found:', user.email, 'Role:', user.role)
 
+    // Normalize role to lowercase to match frontend expectations
+    const normalizedRole = String(user.role).toLowerCase() as 'admin' | 'driver' | 'client'
+
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password)
     console.log('🔑 Password valid:', validPassword)
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
     const token = signToken({
       id: user.id,
       email: user.email,
-      role: user.role
+      role: normalizedRole
     })
 
     // Return user data and token
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: `${user.first_name} ${user.last_name}`,
-        role: user.role,
+        role: normalizedRole,
         avatar: `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=3B82F6&color=fff`
       },
       token

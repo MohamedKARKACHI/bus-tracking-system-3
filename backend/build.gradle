@@ -25,47 +25,14 @@ repositories {
 }
 
 dependencies {
-	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	
-	// WebSocket for real-time tracking
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	
-	// Ehcache for caching
-	implementation 'org.ehcache:ehcache:3.10.8'
-	implementation 'javax.cache:cache-api:1.1.1'
-	
-	// JAXB for Ehcache XML parsing (required for Java 11+)
-	// Ehcache 3.10.8 still uses javax.xml.bind, not jakarta
-	implementation 'javax.xml.bind:jaxb-api:2.3.1'
-	runtimeOnly 'org.glassfish.jaxb:jaxb-runtime:2.3.9'
-	
-	// JWT Authentication
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
-	
-	// Database
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	
-	// Lombok for boilerplate reduction
 	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	
-	// Dev Tools
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	
-	// Documentation (Swagger/OpenAPI)
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-	
-	// Testing
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

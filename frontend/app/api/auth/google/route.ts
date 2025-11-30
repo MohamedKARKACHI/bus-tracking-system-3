@@ -82,12 +82,15 @@ export async function POST(request: Request) {
         user = (newUserRows as any[])[0]
       }
 
+      // Normalize role to lowercase to match frontend expectations
+      const normalizedRole = String(user.role).toLowerCase() as 'admin' | 'driver' | 'client'
+
       // Generate JWT token
       const token = jwt.sign(
         {
           userId: user.id,
           email: user.email,
-          role: user.role,
+          role: normalizedRole,
         },
         JWT_SECRET,
         { expiresIn: "7d" }
@@ -100,7 +103,7 @@ export async function POST(request: Request) {
           email: user.email,
           name: `${user.first_name} ${user.last_name}`.trim(),
           avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name + " " + user.last_name)}&background=3B82F6&color=fff`,
-          role: user.role,
+          role: normalizedRole,
         },
       })
     } finally {

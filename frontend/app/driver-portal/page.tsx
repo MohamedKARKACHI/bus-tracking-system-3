@@ -340,7 +340,7 @@ export default function DriverPortalPage() {
             </div>
             
             {/* Map Container */}
-            <div className="mb-4 h-[300px] sm:h-[400px] rounded-xl overflow-hidden border-2 border-border relative" id="map-fullscreen-container">
+            <div className="mb-4 h-[400px] sm:h-[500px] lg:h-[600px] rounded-xl overflow-hidden border-2 border-border relative" id="map-fullscreen-container">
               <BusMap 
                 height="100%" 
                 showControls={true}

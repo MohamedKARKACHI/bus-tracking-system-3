@@ -58,6 +58,12 @@ export async function POST(request: NextRequest) {
       [user_id, license_number, license_expiry, status]
     )
 
+    // Ensure the associated user has the correct role
+    await pool.query(
+      `UPDATE users SET role = 'driver' WHERE id = ?`,
+      [user_id]
+    )
+
     return NextResponse.json(
       { id: result.insertId, message: 'Driver created successfully' },
       { status: 201 }

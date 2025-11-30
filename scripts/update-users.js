@@ -16,13 +16,14 @@ async function updateUsers() {
     console.log('Deleted old users');
 
     // Insert new users with correct credentials
+    // Note: include the `name` column to satisfy NOT NULL constraint in current schema
     await connection.query(`
-      INSERT INTO users (email, password, role, first_name, last_name, phone) VALUES
-      ('admin@bustrack.com', '$2b$10$veZ0rVQYxKZfREzajt0JJe/okGAJXpf5uU4WitvBPQGQdXsoy2hKq', 'admin', 'John', 'Admin', '+1234567890'),
-      ('driver@bustrack.com', '$2b$10$717ZB1aaCQd1iGsIHpTFPukuhMDL.UleFF0Th0sGPbxSYjNp3Bmuq', 'driver', 'Mike', 'Johnson', '+1234567891'),
-      ('driver2@bustrack.com', '$2b$10$717ZB1aaCQd1iGsIHpTFPukuhMDL.UleFF0Th0sGPbxSYjNp3Bmuq', 'driver', 'Sarah', 'Williams', '+1234567892'),
-      ('client@bustrack.com', '$2b$10$er/7RaiQ07yfC34q0xLzYeq4JccfUwhNnihva/BMk8XQ.DMyAG6we', 'client', 'Alice', 'Smith', '+1234567893'),
-      ('client2@bustrack.com', '$2b$10$er/7RaiQ07yfC34q0xLzYeq4JccfUwhNnihva/BMk8XQ.DMyAG6we', 'client', 'Bob', 'Brown', '+1234567894')
+      INSERT INTO users (email, password, role, first_name, last_name, phone, name) VALUES
+      ('admin@bustrack.com', '$2b$10$veZ0rVQYxKZfREzajt0JJe/okGAJXpf5uU4WitvBPQGQdXsoy2hKq', 'admin', 'John', 'Admin', '+1234567890', 'John Admin'),
+      ('driver@bustrack.com', '$2b$10$717ZB1aaCQd1iGsIHpTFPukuhMDL.UleFF0Th0sGPbxSYjNp3Bmuq', 'driver', 'Mike', 'Johnson', '+1234567891', 'Mike Johnson'),
+      ('driver2@bustrack.com', '$2b$10$717ZB1aaCQd1iGsIHpTFPukuhMDL.UleFF0Th0sGPbxSYjNp3Bmuq', 'driver', 'Sarah', 'Williams', '+1234567892', 'Sarah Williams'),
+      ('client@bustrack.com', '$2b$10$er/7RaiQ07yfC34q0xLzYeq4JccfUwhNnihva/BMk8XQ.DMyAG6we', 'client', 'Alice', 'Smith', '+1234567893', 'Alice Smith'),
+      ('client2@bustrack.com', '$2b$10$er/7RaiQ07yfC34q0xLzYeq4JccfUwhNnihva/BMk8XQ.DMyAG6we', 'client', 'Bob', 'Brown', '+1234567894', 'Bob Brown')
     `);
     console.log('Inserted new users successfully!');
 

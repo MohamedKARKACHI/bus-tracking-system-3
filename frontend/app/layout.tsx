@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth-context"
 import { GoogleOAuthProvider } from "@react-oauth/google"
 import "./globals.css"
 import "mapbox-gl/dist/mapbox-gl.css"
+import "leaflet/dist/leaflet.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })

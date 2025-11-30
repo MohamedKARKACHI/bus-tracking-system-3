@@ -7,7 +7,9 @@ const nextConfig = {
     unoptimized: true,
   },
   transpilePackages: ['react-map-gl', 'mapbox-gl'],
-  turbopack: {},
+  turbopack: {
+    root: process.cwd(),
+  },
 }
 
 export default nextConfig

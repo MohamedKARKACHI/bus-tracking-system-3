@@ -11,6 +11,7 @@ import { RecentActivity } from "@/components/recent-activity"
 import { FleetStatus } from "@/components/fleet-status"
 import { QuickActions } from "@/components/quick-actions"
 import { RecentTickets } from "@/components/recent-tickets"
+import { AdminRouteProgress } from "@/components/admin-route-progress"
 
 export default function Page() {
   const { user, isLoading } = useAuth()
@@ -50,6 +51,7 @@ export default function Page() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 flex flex-col gap-6">
             <LiveMap />
+            <AdminRouteProgress />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FleetStatus />
               <QuickActions />
