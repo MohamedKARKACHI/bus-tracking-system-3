@@ -20,8 +20,5 @@ jobs:
           java-version: '17'
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectKey: YOUR_SONARCLOUD_PROJECT_KEY
-          organization: YOUR_SONARCLOUD_ORG
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
