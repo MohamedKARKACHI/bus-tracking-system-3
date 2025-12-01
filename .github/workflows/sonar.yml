@@ -18,12 +18,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: SonarQube Scan
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
-          args: >
-            -Dsonar.projectKey=bus-tracking-system-3
-            -Dsonar.sources=backend,frontend
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+          projectKey: YOUR_SONARCLOUD_PROJECT_KEY
+          organization: YOUR_SONARCLOUD_ORG
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
