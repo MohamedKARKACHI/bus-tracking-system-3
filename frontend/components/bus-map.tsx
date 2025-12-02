@@ -24,9 +24,9 @@ export function BusMap({
       <MapboxMap
         fullScreen={showControls}
         showControls={showControls}
-        centerLat={centerOn?.lat || 31.638}
-        centerLng={centerOn?.lng || -7.998}
-        zoom={driverMode ? 14 : 12}
+        centerLat={centerOn?.lat || 32.0}
+        centerLng={centerOn?.lng || -6.5}
+        zoom={driverMode ? 13 : 6}
       />
     </div>
   )

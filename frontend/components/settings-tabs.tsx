@@ -54,7 +54,7 @@ export function SettingsTabs() {
                       <label className="block text-sm font-medium text-muted-foreground mb-2">Company Name</label>
                       <input
                         type="text"
-                        defaultValue="BusTrack Transit"
+                        defaultValue="Morocco Transit Services"
                         className="w-full px-4 py-2.5 bg-card/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
                       />
                     </div>
@@ -62,13 +62,14 @@ export function SettingsTabs() {
                       <label className="block text-sm font-medium text-muted-foreground mb-2">Email</label>
                       <input
                         type="email"
-                        defaultValue="admin@bustrack.com"
+                        defaultValue="abdellah.h@bustrack.com"
                         className="w-full px-4 py-2.5 bg-card/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-muted-foreground mb-2">Time Zone</label>
                       <select className="w-full px-4 py-2.5 bg-card/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50">
+                        <option>UTC+0 (Western European Time - Morocco)</option>
                         <option>UTC-5 (Eastern Time)</option>
                         <option>UTC-6 (Central Time)</option>
                         <option>UTC-7 (Mountain Time)</option>

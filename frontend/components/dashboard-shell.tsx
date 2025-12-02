@@ -344,19 +344,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <button className="flex items-center gap-2 sm:gap-3 rounded-full bg-card/50 py-1.5 pl-1.5 pr-3 sm:pr-4 border border-border hover:border-primary/50 hover:bg-card/80 transition-all">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-cyan-400 p-[1px]">
                     <div className="h-full w-full rounded-full bg-card flex items-center justify-center">
-                      <span className="text-xs font-bold text-card-foreground">JD</span>
+                      <span className="text-xs font-bold text-card-foreground">AH</span>
                     </div>
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="text-xs font-medium text-foreground">John Doe</p>
+                    <p className="text-xs font-medium text-foreground">Abdellah Halmaoui</p>
                     <p className="text-[10px] text-muted-foreground">Admin</p>
                   </div>
                 </button>
               }
             >
               <div className="px-4 py-3 border-b border-border/50">
-                <p className="text-sm font-medium text-card-foreground">John Doe</p>
-                <p className="text-xs text-muted-foreground">admin@bustrack.com</p>
+                <p className="text-sm font-medium text-card-foreground">Abdellah Halmaoui</p>
+                <p className="text-xs text-muted-foreground">abdellah.h@bustrack.com</p>
               </div>
               <div className="py-1">
                 <DropdownItem icon={User}>My Profile</DropdownItem>

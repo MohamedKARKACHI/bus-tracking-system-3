@@ -19,12 +19,14 @@ import {
   CreditCard,
   Lock,
   Smartphone,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from "lucide-react"
 
 export default function SettingsPage() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
@@ -39,6 +41,15 @@ export default function SettingsPage() {
     publicProfile: false
   })
   const [darkMode, setDarkMode] = useState(false)
+
+  const handleLogout = () => {
+    setShowLogoutDialog(true)
+  }
+
+  const confirmLogout = () => {
+    logout()
+    router.push("/login")
+  }
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -305,6 +316,14 @@ export default function SettingsPage() {
 
           <div className="space-y-3">
             <Button 
+              onClick={handleLogout}
+              variant="outline" 
+              className="w-full justify-start border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+            <Button 
               variant="outline" 
               className="w-full justify-start border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/50"
             >
@@ -329,6 +348,37 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      {showLogoutDialog && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-red-500/10">
+                <LogOut className="h-6 w-6 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Confirm Logout</h3>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Are you sure you want to logout? You will need to sign in again to access your account.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutDialog(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-border hover:bg-muted/50 text-foreground font-medium transition-all duration-200 hover:scale-105"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all duration-200 hover:scale-105 shadow-lg shadow-red-500/30"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

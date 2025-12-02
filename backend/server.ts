@@ -10,6 +10,8 @@ import scheduleRoutes from './routes/schedule.routes'
 import incidentRoutes from './routes/incident.routes'
 import messageRoutes from './routes/message.routes'
 import gpsRoutes from './routes/gps.routes'
+import ticketRoutes from './routes/ticket.routes'
+import bookingRoutes from './routes/booking.routes'
 
 const app = express()
 const server = createServer(app)
@@ -28,6 +30,8 @@ app.use('/api/schedules', scheduleRoutes)
 app.use('/api/incidents', incidentRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/gps', gpsRoutes)
+app.use('/api/tickets', ticketRoutes)
+app.use('/api/bookings', bookingRoutes)
 
 // Health check
 app.get('/health', (req, res) => {

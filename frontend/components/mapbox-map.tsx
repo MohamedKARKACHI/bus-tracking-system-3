@@ -57,6 +57,7 @@ interface MapboxMapProps {
 }
 
 const stations: StationData[] = [
+  // Marrakech stations
   {
     id: "s1",
     name: "Palmeraie",
@@ -68,7 +69,7 @@ const stations: StationData[] = [
   },
   {
     id: "s2",
-    name: "Sorelle Garden",
+    name: "Gueliz",
     coordinates: [31.65, -7.99],
     type: "major",
     status: "active",
@@ -77,7 +78,7 @@ const stations: StationData[] = [
   },
   {
     id: "s3",
-    name: "Route 3",
+    name: "Massira",
     coordinates: [31.645, -8.01],
     type: "regular",
     status: "active",
@@ -86,7 +87,7 @@ const stations: StationData[] = [
   },
   {
     id: "s4",
-    name: "Carré Eden",
+    name: "Bab Doukkala",
     coordinates: [31.638, -8.022],
     type: "major",
     status: "locked",
@@ -104,7 +105,7 @@ const stations: StationData[] = [
   },
   {
     id: "s6",
-    name: "Bab Doukkala",
+    name: "Bab Agnaou",
     coordinates: [31.64, -8.0],
     type: "major",
     status: "busy",
@@ -113,7 +114,7 @@ const stations: StationData[] = [
   },
   {
     id: "s7",
-    name: "Cyber Park",
+    name: "Menara",
     coordinates: [31.635, -7.99],
     type: "regular",
     status: "active",
@@ -122,7 +123,7 @@ const stations: StationData[] = [
   },
   {
     id: "s8",
-    name: "Gueliz Center",
+    name: "Place 16 Novembre",
     coordinates: [31.63, -8.01],
     type: "regular",
     status: "active",
@@ -140,7 +141,7 @@ const stations: StationData[] = [
   },
   {
     id: "s10",
-    name: "Place de la",
+    name: "Majorelle Garden",
     coordinates: [31.632, -7.988],
     type: "regular",
     status: "locked",
@@ -149,7 +150,7 @@ const stations: StationData[] = [
   },
   {
     id: "s11",
-    name: "Kesh",
+    name: "Train Station",
     coordinates: [31.628, -7.98],
     type: "terminal",
     status: "active",
@@ -158,7 +159,7 @@ const stations: StationData[] = [
   },
   {
     id: "s12",
-    name: "Theatre Royal",
+    name: "Hivernage",
     coordinates: [31.624, -8.008],
     type: "major",
     status: "active",
@@ -185,7 +186,7 @@ const stations: StationData[] = [
   },
   {
     id: "s15",
-    name: "Hivernage Hotel",
+    name: "Medina",
     coordinates: [31.618, -8.018],
     type: "major",
     status: "active",
@@ -194,17 +195,101 @@ const stations: StationData[] = [
   },
   {
     id: "s16",
-    name: "Marrakech Train Sta",
+    name: "Gare ONCF Marrakech",
     coordinates: [31.622, -8.002],
     type: "terminal",
     status: "active",
     routes: ["Route 1", "Route 2", "Route 3"],
     labelColor: "purple",
   },
+  // Casablanca stations
+  {
+    id: "cs1",
+    name: "Casa Port",
+    coordinates: [33.5951, -7.6187],
+    type: "terminal",
+    status: "active",
+    routes: ["Casa Line 1"],
+    labelColor: "blue",
+  },
+  {
+    id: "cs2",
+    name: "Morocco Mall",
+    coordinates: [33.5342, -7.6698],
+    type: "major",
+    status: "active",
+    routes: ["Casa Line 1", "Casa Line 2"],
+    labelColor: "green",
+  },
+  {
+    id: "cs3",
+    name: "Hassan II Mosque",
+    coordinates: [33.6084, -7.6325],
+    type: "major",
+    status: "busy",
+    routes: ["Casa Line 1"],
+    labelColor: "orange",
+  },
+  {
+    id: "cs4",
+    name: "Maarif",
+    coordinates: [33.5731, -7.6289],
+    type: "major",
+    status: "active",
+    routes: ["Casa Line 2"],
+    labelColor: "purple",
+  },
+  {
+    id: "cs5",
+    name: "Twin Center",
+    coordinates: [33.5892, -7.6264],
+    type: "regular",
+    status: "active",
+    routes: ["Casa Line 2"],
+    labelColor: "blue",
+  },
+  // Tangier stations
+  {
+    id: "ts1",
+    name: "Port Tanger Med",
+    coordinates: [35.7795, -5.8108],
+    type: "terminal",
+    status: "active",
+    routes: ["Tanger Line 1"],
+    labelColor: "blue",
+  },
+  {
+    id: "ts2",
+    name: "Grand Socco",
+    coordinates: [35.7813, -5.8103],
+    type: "major",
+    status: "active",
+    routes: ["Tanger Line 1", "Tanger Line 2"],
+    labelColor: "green",
+  },
+  {
+    id: "ts3",
+    name: "Kasbah",
+    coordinates: [35.7847, -5.8139],
+    type: "regular",
+    status: "busy",
+    routes: ["Tanger Line 1"],
+    labelColor: "orange",
+  },
+  {
+    id: "ts4",
+    name: "Ibn Batouta Mall",
+    coordinates: [35.7595, -5.8337],
+    type: "major",
+    status: "active",
+    routes: ["Tanger Line 2"],
+    labelColor: "purple",
+  },
 ]
 
-// Simulated bus data
+// Simulated bus data with route following
 const initialBuses: BusData[] = [
+  // Marrakech buses
   {
     id: "BUS-101",
     name: "Express 101",
@@ -215,7 +300,7 @@ const initialBuses: BusData[] = [
     speed: 45,
     heading: 135,
     passengers: 32,
-    nextStop: "Bab Doukkala",
+    nextStop: "Bab Agnaou",
     eta: "3 min",
   },
   {
@@ -223,7 +308,7 @@ const initialBuses: BusData[] = [
     name: "City Line 202",
     route: "Route 2",
     routeColor: "#22c55e",
-    coordinates: [31.633, -7.987],
+    coordinates: [31.642, -7.99],
     status: "moving",
     speed: 38,
     heading: 200,
@@ -236,43 +321,218 @@ const initialBuses: BusData[] = [
     name: "Metro 303",
     route: "Route 3",
     routeColor: "#06b6d4",
-    coordinates: [31.642, -8.005],
-    status: "in-station",
-    speed: 0,
+    coordinates: [31.643, -8.005],
+    status: "moving",
+    speed: 35,
     heading: 90,
     passengers: 28,
-    nextStop: "Koutoubia",
-    eta: "8 min",
+    nextStop: "Bab Agnaou",
+    eta: "4 min",
   },
   {
     id: "BUS-104",
     name: "Express 104",
     route: "Route 1",
     routeColor: "#8b5cf6",
-    coordinates: [31.626, -7.991],
-    status: "stopped",
-    speed: 0,
+    coordinates: [31.627, -7.992],
+    status: "moving",
+    speed: 42,
     heading: 45,
-    passengers: 15,
-    nextStop: "Train Station",
-    eta: "12 min",
+    passengers: 38,
+    nextStop: "Koutoubia",
+    eta: "2 min",
+  },
+  {
+    id: "BUS-205",
+    name: "City Line 205",
+    route: "Route 2",
+    routeColor: "#22c55e",
+    coordinates: [31.625, -7.995],
+    status: "moving",
+    speed: 40,
+    heading: 180,
+    passengers: 52,
+    nextStop: "Theatre Royal",
+    eta: "6 min",
+  },
+  {
+    id: "BUS-306",
+    name: "Metro 306",
+    route: "Route 3",
+    routeColor: "#06b6d4",
+    coordinates: [31.638, -7.997],
+    status: "moving",
+    speed: 37,
+    heading: 270,
+    passengers: 25,
+    nextStop: "Place de la",
+    eta: "7 min",
+  },
+  // Casablanca buses
+  {
+    id: "CASA-101",
+    name: "Casa Express 101",
+    route: "Casa Line 1",
+    routeColor: "#ef4444",
+    coordinates: [33.598, -7.625],
+    status: "moving",
+    speed: 50,
+    heading: 180,
+    passengers: 48,
+    nextStop: "Hassan II Mosque",
+    eta: "4 min",
+  },
+  {
+    id: "CASA-102",
+    name: "Casa Express 102",
+    route: "Casa Line 1",
+    routeColor: "#ef4444",
+    coordinates: [33.56, -7.65],
+    status: "moving",
+    speed: 45,
+    heading: 90,
+    passengers: 41,
+    nextStop: "Morocco Mall",
+    eta: "6 min",
+  },
+  {
+    id: "CASA-201",
+    name: "Casa Metro 201",
+    route: "Casa Line 2",
+    routeColor: "#f59e0b",
+    coordinates: [33.58, -7.628],
+    status: "moving",
+    speed: 42,
+    heading: 270,
+    passengers: 35,
+    nextStop: "Twin Center",
+    eta: "3 min",
+  },
+  {
+    id: "CASA-202",
+    name: "Casa Metro 202",
+    route: "Casa Line 2",
+    routeColor: "#f59e0b",
+    coordinates: [33.575, -7.63],
+    status: "moving",
+    speed: 48,
+    heading: 45,
+    passengers: 39,
+    nextStop: "Maarif",
+    eta: "5 min",
+  },
+  // Tangier buses
+  {
+    id: "TANG-101",
+    name: "Tanger Express 101",
+    route: "Tanger Line 1",
+    routeColor: "#10b981",
+    coordinates: [35.782, -5.812],
+    status: "moving",
+    speed: 40,
+    heading: 90,
+    passengers: 30,
+    nextStop: "Grand Socco",
+    eta: "2 min",
+  },
+  {
+    id: "TANG-102",
+    name: "Tanger Express 102",
+    route: "Tanger Line 1",
+    routeColor: "#10b981",
+    coordinates: [35.785, -5.814],
+    status: "moving",
+    speed: 38,
+    heading: 180,
+    passengers: 27,
+    nextStop: "Medina",
+    eta: "4 min",
+  },
+  {
+    id: "TANG-201",
+    name: "Tanger Metro 201",
+    route: "Tanger Line 2",
+    routeColor: "#6366f1",
+    coordinates: [35.765, -5.83],
+    status: "moving",
+    speed: 44,
+    heading: 270,
+    passengers: 33,
+    nextStop: "City Center",
+    eta: "5 min",
+  },
+  // Inter-city buses
+  {
+    id: "IC-TC-01",
+    name: "Tanger-Casa Express",
+    route: "Tanger-Casa Express",
+    routeColor: "#ec4899",
+    coordinates: [34.5, -6.5],
+    status: "moving",
+    speed: 85,
+    heading: 180,
+    passengers: 45,
+    nextStop: "Casablanca",
+    eta: "2h 30min",
+  },
+  {
+    id: "IC-CM-01",
+    name: "Casa-Marrakech Express",
+    route: "Casa-Marrakech Express",
+    routeColor: "#a855f7",
+    coordinates: [32.5, -7.85],
+    status: "moving",
+    speed: 90,
+    heading: 200,
+    passengers: 52,
+    nextStop: "Marrakech",
+    eta: "1h 45min",
+  },
+  {
+    id: "IC-TM-01",
+    name: "Tanger-Marrakech Direct",
+    route: "Tanger-Marrakech Direct",
+    routeColor: "#14b8a6",
+    coordinates: [33.5, -7.0],
+    status: "moving",
+    speed: 88,
+    heading: 220,
+    passengers: 48,
+    nextStop: "Marrakech",
+    eta: "4h 15min",
   },
 ]
 
-// Route paths
+// Route paths - More detailed coordinates for smoother lines
 const routes = [
+  // Marrakech routes
   {
     id: "route-1",
     name: "Route 1",
     color: "#8b5cf6",
     coordinates: [
-      [31.6695, -7.9811],
-      [31.65, -7.99],
-      [31.64, -8.0],
-      [31.637, -7.982],
-      [31.6258, -7.9891],
-      [31.628, -7.993],
-      [31.622, -8.002],
+      [31.6695, -7.9811], // Palmeraie
+      [31.667, -7.985],
+      [31.664, -7.987],
+      [31.66, -7.988],
+      [31.655, -7.989],
+      [31.65, -7.99], // Sorelle Garden
+      [31.648, -7.992],
+      [31.646, -7.995],
+      [31.644, -7.998],
+      [31.64, -8.0], // Bab Doukkala
+      [31.639, -7.995],
+      [31.638, -7.99],
+      [31.637, -7.982], // Ben Youssef
+      [31.635, -7.985],
+      [31.632, -7.987],
+      [31.63, -7.988],
+      [31.6258, -7.9891], // Jemaa el Fna
+      [31.627, -7.992],
+      [31.628, -7.993], // Koutoubia
+      [31.626, -7.996],
+      [31.624, -7.999],
+      [31.622, -8.002], // Train Station
     ] as [number, number][],
   },
   {
@@ -280,13 +540,25 @@ const routes = [
     name: "Route 2",
     color: "#22c55e",
     coordinates: [
-      [31.65, -7.99],
-      [31.635, -7.99],
-      [31.637, -7.982],
-      [31.6258, -7.9891],
-      [31.624, -8.008],
-      [31.618, -8.018],
-      [31.622, -8.002],
+      [31.65, -7.99], // Sorelle Garden
+      [31.648, -7.99],
+      [31.645, -7.99],
+      [31.642, -7.99],
+      [31.64, -7.99],
+      [31.637, -7.989],
+      [31.637, -7.982], // Ben Youssef
+      [31.635, -7.985],
+      [31.632, -7.987],
+      [31.63, -7.988],
+      [31.6258, -7.9891], // Jemaa el Fna
+      [31.625, -7.995],
+      [31.624, -8.002],
+      [31.624, -8.008], // Theatre Royal
+      [31.622, -8.01],
+      [31.62, -8.014],
+      [31.618, -8.018], // Hivernage Hotel
+      [31.62, -8.01],
+      [31.622, -8.002], // Train Station
     ] as [number, number][],
   },
   {
@@ -294,11 +566,117 @@ const routes = [
     name: "Route 3",
     color: "#06b6d4",
     coordinates: [
-      [31.645, -8.01],
-      [31.64, -8.0],
-      [31.632, -7.988],
-      [31.628, -7.993],
-      [31.622, -8.002],
+      [31.645, -8.01], // Route 3 start
+      [31.644, -8.008],
+      [31.643, -8.005],
+      [31.641, -8.002],
+      [31.64, -8.0], // Bab Doukkala
+      [31.638, -7.997],
+      [31.636, -7.994],
+      [31.634, -7.99],
+      [31.632, -7.988], // Place de la
+      [31.63, -7.99],
+      [31.628, -7.993], // Koutoubia
+      [31.626, -7.996],
+      [31.624, -7.999],
+      [31.622, -8.002], // Train Station
+    ] as [number, number][],
+  },
+  // Casablanca routes
+  {
+    id: "casa-route-1",
+    name: "Casa Line 1",
+    color: "#ef4444",
+    coordinates: [
+      [33.5951, -7.6187], // Casa Port
+      [33.598, -7.625],
+      [33.602, -7.628],
+      [33.6084, -7.6325], // Hassan II Mosque
+      [33.605, -7.64],
+      [33.598, -7.65],
+      [33.58, -7.66],
+      [33.56, -7.665],
+      [33.5342, -7.6698], // Morocco Mall
+    ] as [number, number][],
+  },
+  {
+    id: "casa-route-2",
+    name: "Casa Line 2",
+    color: "#f59e0b",
+    coordinates: [
+      [33.5342, -7.6698], // Morocco Mall
+      [33.545, -7.66],
+      [33.56, -7.645],
+      [33.5731, -7.6289], // Maarif
+      [33.58, -7.628],
+      [33.5892, -7.6264], // Twin Center
+    ] as [number, number][],
+  },
+  // Tangier routes
+  {
+    id: "tanger-route-1",
+    name: "Tanger Line 1",
+    color: "#10b981",
+    coordinates: [
+      [35.7795, -5.8108], // Tanger Port
+      [35.782, -5.812],
+      [35.7813, -5.8103], // Grand Socco
+      [35.783, -5.812],
+      [35.7847, -5.8139], // Medina
+    ] as [number, number][],
+  },
+  {
+    id: "tanger-route-2",
+    name: "Tanger Line 2",
+    color: "#6366f1",
+    coordinates: [
+      [35.7813, -5.8103], // Grand Socco
+      [35.778, -5.815],
+      [35.77, -5.82],
+      [35.765, -5.83],
+      [35.7595, -5.8337], // Tanger City Center
+    ] as [number, number][],
+  },
+  // Inter-city routes
+  {
+    id: "intercity-tanger-casa",
+    name: "Tanger-Casa Express",
+    color: "#ec4899",
+    coordinates: [
+      [35.7795, -5.8108], // Tanger Port
+      [35.5, -5.9],
+      [35.0, -6.2],
+      [34.5, -6.5],
+      [34.0, -6.8],
+      [33.6, -7.2],
+      [33.5951, -7.6187], // Casa Port
+    ] as [number, number][],
+  },
+  {
+    id: "intercity-casa-marrakech",
+    name: "Casa-Marrakech Express",
+    color: "#a855f7",
+    coordinates: [
+      [33.5951, -7.6187], // Casa Port
+      [33.3, -7.7],
+      [33.0, -7.8],
+      [32.5, -7.85],
+      [32.0, -7.9],
+      [31.6695, -7.9811], // Marrakech Palmeraie
+    ] as [number, number][],
+  },
+  {
+    id: "intercity-tanger-marrakech",
+    name: "Tanger-Marrakech Direct",
+    color: "#14b8a6",
+    coordinates: [
+      [35.7795, -5.8108], // Tanger Port
+      [35.0, -6.0],
+      [34.2, -6.5],
+      [33.5, -7.0],
+      [32.8, -7.4],
+      [32.2, -7.7],
+      [31.6695, -7.9811], // Marrakech Palmeraie
     ] as [number, number][],
   },
 ]
@@ -330,11 +708,13 @@ const MapControlButtons = dynamic(
         const map = useMap()
 
         const handleZoomIn = () => {
-          map.zoomIn()
+          const currentZoom = map.getZoom()
+          map.setZoom(currentZoom + 1, { animate: true, duration: 0.3 })
         }
 
         const handleZoomOut = () => {
-          map.zoomOut()
+          const currentZoom = map.getZoom()
+          map.setZoom(currentZoom - 1, { animate: true, duration: 0.3 })
         }
 
         const handleMyLocation = () => {
@@ -366,8 +746,8 @@ const MapControlButtons = dynamic(
         }
 
         const handleChangeLocation = () => {
-          // Center on Marrakech with animation
-          map.flyTo([31.638, -7.998], 14, { duration: 1.5 })
+          // Center on Morocco overview with animation
+          map.flyTo([31.638, -7.998], 12, { duration: 1.5 })
         }
 
         return (
@@ -480,9 +860,9 @@ const MapResizeHandler = dynamic(
 export function MapboxMap({
   className = "",
   fullScreen = false,
-  centerLat = 31.638,
-  centerLng = -7.998,
-  zoom = 14,
+  centerLat = 33.5,
+  centerLng = -7.0,
+  zoom = 6,
 }: MapboxMapProps) {
   const [buses, setBuses] = useState<BusData[]>(initialBuses)
   const [selectedBus, setSelectedBus] = useState<BusData | null>(null)
@@ -493,7 +873,7 @@ export function MapboxMap({
   const [L, setL] = useState<any>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
-  const [mapKey, setMapKey] = useState(0)
+  const [mapInstance, setMapInstance] = useState<any>(null)
 
   useEffect(() => {
     setIsClient(true)
@@ -511,15 +891,18 @@ export function MapboxMap({
     })
   }, [])
 
-  // Force map re-render when container size changes
+  // Cleanup map instance on unmount
   useEffect(() => {
-    if (isClient && L) {
-      const timer = setTimeout(() => {
-        setMapKey(prev => prev + 1)
-      }, 100)
-      return () => clearTimeout(timer)
+    return () => {
+      if (mapInstance) {
+        try {
+          mapInstance.remove()
+        } catch (e) {
+          console.warn('Map cleanup error:', e)
+        }
+      }
     }
-  }, [isClient, L, isFullscreen])
+  }, [mapInstance])
 
   const handleFullscreenToggle = useCallback(() => {
     const mapContainer = document.getElementById("map-container")
@@ -545,24 +928,55 @@ export function MapboxMap({
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
-  // Simulate bus movement
+  // Simulate bus movement along routes
   useEffect(() => {
     const interval = setInterval(() => {
       setBuses((prevBuses) =>
         prevBuses.map((bus) => {
           if (bus.status !== "moving") return bus
-          const newLat = bus.coordinates[0] + (Math.random() - 0.5) * 0.0008
-          const newLng = bus.coordinates[1] + (Math.random() - 0.5) * 0.0008
+          
+          // Find the bus's route
+          const route = routes.find((r) => r.name === bus.route)
+          if (!route) return bus
+          
+          // Find closest point on route
+          let closestIndex = 0
+          let minDistance = Infinity
+          route.coordinates.forEach((coord, index) => {
+            const distance = Math.sqrt(
+              Math.pow(coord[0] - bus.coordinates[0], 2) +
+              Math.pow(coord[1] - bus.coordinates[1], 2)
+            )
+            if (distance < minDistance) {
+              minDistance = distance
+              closestIndex = index
+            }
+          })
+          
+          // Move to next point on route
+          const nextIndex = (closestIndex + 1) % route.coordinates.length
+          const nextPoint = route.coordinates[nextIndex]
+          
+          // Calculate direction
+          const dx = nextPoint[1] - bus.coordinates[1]
+          const dy = nextPoint[0] - bus.coordinates[0]
+          const heading = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360
+          
+          // Move towards next point (smaller step for smoother movement)
+          const step = 0.0003
+          const newLat = bus.coordinates[0] + dy * step
+          const newLng = bus.coordinates[1] + dx * step
+          
           return {
             ...bus,
             coordinates: [newLat, newLng] as [number, number],
-            speed: Math.floor(30 + Math.random() * 30),
+            speed: Math.floor(30 + Math.random() * 25),
             passengers: Math.max(0, Math.min(60, bus.passengers + Math.floor(Math.random() * 5) - 2)),
-            heading: (bus.heading + (Math.random() - 0.5) * 30 + 360) % 360,
+            heading,
           }
         }),
       )
-    }, 2000)
+    }, 1500) // Update every 1.5 seconds for smoother movement
     return () => clearInterval(interval)
   }, [])
 
@@ -689,12 +1103,16 @@ export function MapboxMap({
 
   // Load Leaflet CSS
   useEffect(() => {
-    if (typeof window !== 'undefined' && !document.querySelector('link[href*="leaflet.css"]')) {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      link.crossOrigin = ''
-      document.head.appendChild(link)
+    if (typeof window !== 'undefined') {
+      const existingLink = document.querySelector('link[href*="leaflet.css"]')
+      if (!existingLink) {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        link.crossOrigin = ''
+        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
+        document.head.appendChild(link)
+      }
     }
   }, [])
 
@@ -751,34 +1169,43 @@ export function MapboxMap({
         #map-container:fullscreen .leaflet-container { border-radius: 0; }
       `}</style>
 
-      <MapContainer
-        center={[centerLat, centerLng]}
-        zoom={zoom}
-        style={{ width: "100%", height: "100%", minHeight: "400px", borderRadius: isFullscreen ? "0" : "0.75rem" }}
-        zoomControl={false}
-        key={`map-${mapKey}-${centerLat}-${centerLng}-${zoom}`}
-        whenReady={(mapEvent) => {
-          // Invalidate map size to fix blank areas
-          const map = mapEvent.target
-          if (map && typeof map.invalidateSize === 'function') {
+      <div style={{ width: "100%", height: "100%", minHeight: "400px", position: "relative" }}>
+        <MapContainer
+          center={[centerLat, centerLng]}
+          zoom={zoom}
+          style={{ width: "100%", height: "100%", minHeight: "400px", borderRadius: isFullscreen ? "0" : "0.75rem" }}
+          zoomControl={false}
+          whenCreated={(map) => {
+            setMapInstance(map)
+            // Invalidate map size after creation with multiple attempts
             setTimeout(() => {
               try {
-                map.invalidateSize()
+                if (map && typeof map.invalidateSize === 'function') {
+                  map.invalidateSize({ animate: true })
+                }
               } catch (error) {
                 console.warn('Map invalidateSize error:', error)
               }
             }, 100)
-          }
-        }}
-      >
+            setTimeout(() => {
+              try {
+                if (map && typeof map.invalidateSize === 'function') {
+                  map.invalidateSize({ animate: true })
+                }
+              } catch (error) {
+                console.warn('Map invalidateSize retry error:', error)
+              }
+            }, 500)
+          }}
+        >
         <MapResizeHandler />
         <TileLayer
           url={getTileUrl()}
           attribution='&copy; <a href="https://www.mapbox.com/">Mapbox</a>'
           tileSize={512}
           zoomOffset={-1}
-          maxZoom={18}
-          minZoom={10}
+          maxZoom={19}
+          minZoom={5}
         />
 
         {/* Route Lines */}
@@ -837,6 +1264,7 @@ export function MapboxMap({
           setUserLocation={setUserLocation}
         />
       </MapContainer>
+      </div>
 
       {/* Map Controls - Left Side */}
       <div className="absolute top-4 left-4 flex flex-col gap-2 z-[1000]">
