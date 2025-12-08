@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils"
 import { CustomDropdown, DropdownItem, DropdownDivider } from "@/components/ui/custom-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AdminMobileNav } from "@/components/admin-mobile-nav"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -36,6 +37,7 @@ const navigation = [
   { name: "Fleet Management", href: "/fleet", icon: Bus },
   { name: "ANPR Cameras", href: "/cameras", icon: Video },
   { name: "Drivers & Users", href: "/drivers", icon: Users },
+  { name: "ID Cards", href: "/id-cards", icon: Shield },
   { name: "Analytics", href: "/analytics", icon: PieChart },
   { name: "Payments", href: "/payments", icon: CreditCard },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -59,51 +61,43 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-foreground font-sans selection:bg-primary/20">
+      {/* Mobile sidebar backdrop - Removed as we switched to bottom nav */}
 
-      {/* Sidebar */}
+      {/* Sidebar - Desktop Only */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out lg:static lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          sidebarCollapsed ? "lg:w-20" : "w-72",
-          "flex flex-col border-r border-border bg-card/80 backdrop-blur-xl",
+          "hidden lg:flex flex-col border-r border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl transition-all duration-300 ease-in-out",
+          sidebarCollapsed ? "w-20" : "w-72",
         )}
       >
         <div
           className={cn(
-            "flex h-20 items-center border-b border-border/50",
+            "flex h-20 items-center border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-800 dark:to-slate-800",
             sidebarCollapsed ? "justify-center px-4" : "justify-between px-6",
           )}
         >
           <div className={cn("flex items-center gap-3", sidebarCollapsed && "lg:gap-0")}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 shadow-lg shadow-primary/20">
-              <Bus className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30">
+              <Bus className="h-7 w-7 text-white" />
             </div>
             {!sidebarCollapsed && (
-              <span className="text-xl font-bold tracking-tight text-card-foreground">
-                Bus<span className="text-primary">Track</span>
+              <span className="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">
+                Bus<span className="text-blue-500">Track</span>
               </span>
             )}
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted/50 lg:hidden"
+            className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-3 py-6 overflow-y-auto">
           {!sidebarCollapsed && (
-            <div className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Main Menu
             </div>
           )}
@@ -118,21 +112,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   "group flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
                   sidebarCollapsed ? "justify-center px-3 py-3" : "px-4 py-3",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
                 )}
               >
                 <item.icon
                   className={cn(
                     "h-5 w-5 transition-colors flex-shrink-0",
-                    isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-accent-foreground",
+                    isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-blue-500",
                   )}
                 />
                 {!sidebarCollapsed && (
                   <>
                     <span className="truncate">{item.name}</span>
                     {isActive && (
-                      <div className="ml-auto h-2 w-2 rounded-full bg-primary-foreground shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                      <div className="ml-auto h-2 w-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
                     )}
                   </>
                 )}
@@ -141,7 +135,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           })}
 
           {!sidebarCollapsed && (
-            <div className="mt-8 mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mt-8 mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               System
             </div>
           )}
@@ -152,20 +146,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               "group flex items-center gap-3 rounded-xl text-sm font-medium transition-all",
               sidebarCollapsed ? "justify-center px-3 py-3" : "px-4 py-3",
               pathname === "/notifications"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
             )}
           >
             <Bell
               className={cn(
                 "h-5 w-5 flex-shrink-0 transition-colors",
-                pathname === "/notifications" ? "text-primary-foreground" : "text-muted-foreground group-hover:text-accent-foreground"
+                pathname === "/notifications" ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-blue-500"
               )}
             />
             {!sidebarCollapsed && (
               <>
                 <span>Notifications</span>
-                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                   3
                 </span>
               </>
@@ -173,23 +167,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </Link>
         </nav>
 
-        <div className="border-t border-border p-4">
+        <div className="border-t border-slate-200/60 dark:border-slate-700/60 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-800">
           <button
             onClick={handleLogout}
             title={sidebarCollapsed ? "Log Out" : undefined}
             className={cn(
-              "group flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-all w-full",
+              "group flex items-center gap-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-500 transition-all w-full",
               sidebarCollapsed ? "justify-center px-3 py-3" : "px-4 py-3",
             )}
           >
-            <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-red-400 flex-shrink-0" />
+            <LogOut className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover:text-red-500 flex-shrink-0" />
             {!sidebarCollapsed && <span>Log Out</span>}
           </button>
         </div>
 
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="hidden lg:flex absolute -right-3 top-24 h-6 w-6 items-center justify-center rounded-full border border-border bg-card shadow-lg text-muted-foreground hover:text-card-foreground hover:bg-muted/50 transition-all z-50"
+          className="hidden lg:flex absolute -right-3 top-24 h-6 w-6 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-all z-50"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -229,20 +223,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="relative z-30 flex h-20 items-center justify-between border-b border-border bg-card/50 backdrop-blur-md px-4 sm:px-6 lg:px-8">
+        <header className="relative z-50 flex h-20 items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 shadow-sm">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-muted/50 lg:hidden"
+            className="rounded-lg p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
 
-          <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               System Operational
             </span>
-            <span className="text-muted-foreground">|</span>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
             <span>Last updated: just now</span>
           </div>
 
@@ -251,9 +245,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="hidden sm:block">
               <CustomDropdown
                 trigger={
-                  <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
+                  <button className="relative p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <Bell className="h-5 w-5" />
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)] animate-pulse" />
+                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse" />
                   </button>
                 }
                 width="w-80"
@@ -379,7 +373,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0">{children}</main>
+
+        {/* Mobile Navigation */}
+        <AdminMobileNav />
       </div>
     </div>
   )

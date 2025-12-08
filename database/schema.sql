@@ -171,6 +171,8 @@ CREATE TABLE IF NOT EXISTS incidents (
     incident_type ENUM('accident', 'breakdown', 'delay', 'other') NOT NULL,
     description TEXT NOT NULL,
     severity ENUM('low', 'medium', 'high', 'critical') DEFAULT 'low',
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
     status ENUM('reported', 'investigating', 'resolved', 'closed') DEFAULT 'reported',
     reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP NULL,

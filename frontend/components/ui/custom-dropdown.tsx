@@ -38,7 +38,7 @@ export function CustomDropdown({ trigger, children, align = "right", width = "w-
       {isOpen && (
         <div
           className={cn(
-            "absolute top-full mt-2 rounded-xl bg-card border border-border/50 shadow-xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-200",
+            "absolute top-full mt-2 origin-top-right rounded-xl bg-card border border-border shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200 z-[100]",
             align === "right" ? "right-0" : "left-0",
             width,
             className,

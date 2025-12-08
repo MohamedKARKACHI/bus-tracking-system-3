@@ -1,6 +1,9 @@
 "use client"
 
 import type React from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 
 import { ClientSidebarProvider, useClientSidebar } from "@/lib/client-sidebar-context"
 import { ClientPortalSidebar } from "@/components/client-portal-sidebar"
@@ -8,6 +11,24 @@ import { Menu, X } from "lucide-react"
 
 function ClientPortalLayoutContent({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, sidebarExpanded } = useClientSidebar()
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        router.replace('/login')
+      } else if (user.role !== 'client') {
+        if (user.role === 'admin') router.replace('/admin')
+        else if (user.role === 'driver') router.replace('/driver-portal')
+        else router.replace('/login')
+      }
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading || !user || user.role !== 'client') {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-background">

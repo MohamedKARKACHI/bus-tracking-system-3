@@ -51,7 +51,7 @@ export function DriverPortalSidebar() {
     <>
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border/50 dark:border-border/30 transition-all duration-300 shadow-xl",
+          "hidden lg:block fixed inset-y-0 left-0 z-40 bg-card/95 dark:bg-card/90 backdrop-blur-xl border-r border-border/50 dark:border-border/30 transition-all duration-300 shadow-xl",
           sidebarExpanded ? "w-72" : "w-20",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
@@ -85,33 +85,33 @@ export function DriverPortalSidebar() {
           {/* Navigation Menu */}
           <div className="flex-1 p-2 sm:p-3 space-y-1 flex flex-col justify-between overflow-hidden">
             <div className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-xl font-medium transition-all group relative",
-                    sidebarExpanded ? "justify-start" : "justify-center",
-                    isActive
-                      ? "bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500 text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-500/20 scale-105"
-                      : "text-muted-foreground hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-cyan-500/10 dark:hover:from-blue-500/5 dark:hover:to-cyan-500/5 hover:text-foreground dark:hover:text-foreground hover:scale-102",
-                  )}
-                >
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110",
-                    isActive && "drop-shadow-lg"
-                  )} />
-                  {sidebarExpanded && <span className="text-sm">{item.label}</span>}
-                  {!sidebarExpanded && isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500 rounded-r-full" />
-                  )}
-                </Link>
-              )
-            })}
+              {menuItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl font-medium transition-all group relative",
+                      sidebarExpanded ? "justify-start" : "justify-center",
+                      isActive
+                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500 text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-500/20 scale-105"
+                        : "text-muted-foreground hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-cyan-500/10 dark:hover:from-blue-500/5 dark:hover:to-cyan-500/5 hover:text-foreground dark:hover:text-foreground hover:scale-102",
+                    )}
+                  >
+                    <Icon className={cn(
+                      "h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110",
+                      isActive && "drop-shadow-lg"
+                    )} />
+                    {sidebarExpanded && <span className="text-sm">{item.label}</span>}
+                    {!sidebarExpanded && isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500 rounded-r-full" />
+                    )}
+                  </Link>
+                )
+              })}
             </div>
           </div>
 

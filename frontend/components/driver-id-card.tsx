@@ -58,10 +58,10 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
   }, [driverData])
 
   return (
-    <div className="w-full max-w-sm mx-auto perspective-[1000px]">
+    <div className="w-full max-w-md mx-auto perspective-[1000px]">
       <div
         className={cn(
-          "relative w-full aspect-[2/3] transition-transform duration-700 transform-style-3d cursor-pointer",
+          "relative w-full aspect-[4/5] min-h-[520px] transition-transform duration-700 transform-style-3d cursor-pointer",
           isFlipped && "rotate-y-180"
         )}
         onMouseEnter={() => setIsFlipped(true)}
@@ -72,18 +72,18 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
           {/* Card Container */}
           <div className="relative w-full h-full bg-white dark:bg-slate-900">
             {/* Top Curved Section with Company Branding */}
-            <div className="relative h-36 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 overflow-hidden">
+            <div className="relative h-28 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 overflow-hidden">
               {/* Geometric Pattern */}
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-4 right-4 w-24 h-24 border-4 border-white/30 rounded-full" />
                 <div className="absolute top-8 right-8 w-16 h-16 border-4 border-white/20 rounded-full" />
                 <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-purple-600/30 rounded-full blur-2xl" />
-                <div className="absolute top-0 right-0 w-full h-full" style={{ 
+                <div className="absolute top-0 right-0 w-full h-full" style={{
                   backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)',
-                  backgroundSize: '30px 30px' 
+                  backgroundSize: '30px 30px'
                 }} />
               </div>
-              
+
               {/* Company Logo and Name */}
               <div className="relative px-6 pt-6 flex items-center gap-3">
                 <div className="relative">
@@ -100,17 +100,17 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
             </div>
 
             {/* Main Content */}
-            <div className="relative px-6 -mt-16 pb-24">
+            <div className="relative px-6 -mt-12 pb-24">
               {/* Photo Section */}
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-2">
                 <div className="relative">
                   {/* Outer Glow */}
                   <div className="absolute -inset-2 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full blur-lg opacity-40" />
-                  
+
                   {/* White Border */}
                   <div className="relative bg-white dark:bg-slate-800 rounded-full p-2 shadow-2xl">
                     {/* Photo Circle with Initials */}
-                    <div className="relative h-28 w-28 rounded-full bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center overflow-hidden">
+                    <div className="relative h-24 w-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center overflow-hidden">
                       {driverData.avatar && driverData.avatar !== "/placeholder.svg" ? (
                         <img
                           src={driverData.avatar}
@@ -118,7 +118,7 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-white text-4xl font-bold drop-shadow-lg">
+                        <span className="text-white text-3xl font-bold drop-shadow-lg">
                           {getInitials(driverData.name)}
                         </span>
                       )}
@@ -128,7 +128,7 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
               </div>
 
               {/* Name */}
-              <div className="text-center mb-4">
+              <div className="text-center mb-3">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
                   {driverData.name.toUpperCase()}
                 </h2>
@@ -136,13 +136,13 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
               </div>
 
               {/* QR Code */}
-              <div className="flex justify-center mb-6">
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg border-2 border-slate-200 dark:border-slate-700">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-2 shadow-lg border-2 border-slate-200 dark:border-slate-700">
                   {qrCodeUrl && (
                     <img
                       src={qrCodeUrl}
                       alt="QR Code"
-                      className="w-28 h-28"
+                      className="w-24 h-24"
                     />
                   )}
                 </div>
@@ -178,9 +178,9 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute -top-8 -right-8 w-32 h-32 border-4 border-white/30 rounded-full" />
                 <div className="absolute -top-4 -right-4 w-20 h-20 border-4 border-white/20 rounded-full" />
-                <div className="absolute bottom-0 left-0 w-full h-full" style={{ 
+                <div className="absolute bottom-0 left-0 w-full h-full" style={{
                   backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)',
-                  backgroundSize: '30px 30px' 
+                  backgroundSize: '30px 30px'
                 }} />
               </div>
 
@@ -192,12 +192,12 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
                     <p className="text-white font-bold text-lg">{driverData.id}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <p className="text-blue-100 text-xs mb-1">Email:</p>
                   <p className="text-white font-semibold text-sm">{driverData.email}</p>
                 </div>
-                
+
                 <div>
                   <p className="text-blue-100 text-xs mb-1">Phone:</p>
                   <p className="text-white font-semibold text-sm">+212 600 000 000</p>
@@ -234,7 +234,7 @@ export function DriverIdCard({ driver }: DriverIdCardProps) {
                     </linearGradient>
                   </defs>
                 </svg>
-                
+
                 {/* Company Name in Wave */}
                 <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-2 z-10">
                   <Bus className="h-5 w-5 text-blue-900 dark:text-white drop-shadow-md" />

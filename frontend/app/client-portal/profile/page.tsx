@@ -4,300 +4,277 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { GlassCard } from "@/components/ui/glass-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X } from "lucide-react"
+import { User, Mail, Phone, Ticket, DollarSign, Loader2, Camera, Save, Edit } from "lucide-react"
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
-  const [isEditing, setIsEditing] = useState(false)
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    country: "",
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
   })
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login")
     } else if (!isLoading && user && user.role !== "client") {
-      if (user.role === "admin") {
-        router.push("/dashboard")
-      } else if (user.role === "driver") {
-        router.push("/driver-portal")
-      }
-    } else if (user) {
-      // Initialize form with user data
-      const nameParts = user.name?.split(" ") || ["", ""]
-      setFormData({
-        firstName: nameParts[0] || "",
-        lastName: nameParts.slice(1).join(" ") || "",
-        email: user.email || "",
-        phone: "+1234567890",
-        address: "123 Main Street",
-        city: "New York",
-        country: "United States",
-      })
+      router.push("/dashboard")
     }
   }, [user, isLoading, router])
 
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile()
+    }
+  }, [user])
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/user/profile?user_id=${user?.id}`)
+      const data = await response.json()
+      setProfile(data)
+      setFormData({
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      })
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id,
+          ...formData
+        })
+      })
+
+      if (response.ok) {
+        await fetchProfile()
+        setEditing(false)
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (isLoading || !user || user.role !== "client") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+        <Loader2 className="w-16 h-16 text-cyan-600 animate-spin" />
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 p-4 sm:p-6 lg:p-8">
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <Loader2 className="w-12 h-12 text-cyan-600 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 dark:text-slate-400">Loading profile...</p>
         </div>
       </div>
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Call API to update profile
-    console.log("Updated profile:", formData)
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    // Reset form to original user data
-    const nameParts = user.name?.split(" ") || ["", ""]
-    setFormData({
-      firstName: nameParts[0] || "",
-      lastName: nameParts.slice(1).join(" ") || "",
-      email: user.email || "",
-      phone: "+1234567890",
-      address: "123 Main Street",
-      city: "New York",
-      country: "United States",
-    })
-    setIsEditing(false)
-  }
-
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">My Profile</h1>
-        <p className="text-muted-foreground">Manage your personal information</p>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <GlassCard className="lg:col-span-1">
-          <div className="text-center">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 mx-auto mb-4 flex items-center justify-center">
-              <span className="text-5xl font-bold text-white">
-                {formData.firstName.charAt(0)}
-                {formData.lastName.charAt(0)}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-1">
-              {formData.firstName} {formData.lastName}
-            </h2>
-            <p className="text-muted-foreground mb-2">{formData.email}</p>
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 text-sm font-semibold">
-              <User className="w-4 h-4 mr-1" />
-              Client
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>Member since Nov 2025</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{formData.city}, {formData.country}</span>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">My Profile</h1>
+            <p className="text-slate-600 dark:text-slate-400">Manage your account information</p>
           </div>
-        </GlassCard>
-
-        {/* Profile Details Form */}
-        <GlassCard className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-foreground">Personal Information</h3>
-            {!isEditing ? (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+          {!editing ? (
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditing(false)}
+                className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-all font-semibold"
               >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleCancel}
-                  variant="outline"
-                  className="border-border"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </Button>
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-semibold rounded-xl transition-all"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid gap-6">
+          {/* Profile Info Card */}
+          <GlassCard className="p-8">
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Avatar */}
+              <div className="flex flex-col items-center">
+                <div className="relative group">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl">
+                    {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                  </div>
+                  <button className="absolute bottom-0 right-0 w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                    <Camera className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                  </button>
+                </div>
+                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">Member since</p>
+                <p className="font-semibold text-slate-900 dark:text-white">
+                  {new Date(profile?.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </p>
               </div>
-            )}
+
+              {/* Form Fields */}
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                      First Name
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white">
+                        <User className="w-5 h-5 text-slate-400" />
+                        {profile?.first_name}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                      Last Name
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        value={formData.last_name}
+                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white">
+                        <User className="w-5 h-5 text-slate-400" />
+                        {profile?.last_name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    Email
+                  </label>
+                  {editing ? (
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white">
+                      <Mail className="w-5 h-5 text-slate-400" />
+                      {profile?.email}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    Phone
+                  </label>
+                  {editing ? (
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white">
+                      <Phone className="w-5 h-5 text-slate-400" />
+                      {profile?.phone || 'Not provided'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <Ticket className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.total_tickets || 0}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Tickets</p>
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center">
+                  <Ticket className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.active_tickets || 0}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Active Tickets</p>
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">${profile?.total_spent || 0}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Spent</p>
+                </div>
+              </div>
+            </GlassCard>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-sm font-medium text-foreground mb-2 block">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  disabled={!isEditing}
-                  className="bg-background border-border"
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName" className="text-sm font-medium text-foreground mb-2 block">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  disabled={!isEditing}
-                  className="bg-background border-border"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium text-foreground mb-2 block">
-                <Mail className="w-4 h-4 inline mr-2" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!isEditing}
-                className="bg-background border-border"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phone" className="text-sm font-medium text-foreground mb-2 block">
-                <Phone className="w-4 h-4 inline mr-2" />
-                Phone Number
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                disabled={!isEditing}
-                className="bg-background border-border"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="address" className="text-sm font-medium text-foreground mb-2 block">
-                <MapPin className="w-4 h-4 inline mr-2" />
-                Street Address
-              </Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                disabled={!isEditing}
-                className="bg-background border-border"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="city" className="text-sm font-medium text-foreground mb-2 block">
-                  City
-                </Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  disabled={!isEditing}
-                  className="bg-background border-border"
-                />
-              </div>
-              <div>
-                <Label htmlFor="country" className="text-sm font-medium text-foreground mb-2 block">
-                  Country
-                </Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  disabled={!isEditing}
-                  className="bg-background border-border"
-                />
-              </div>
-            </div>
-          </form>
-        </GlassCard>
-
-        {/* Account Settings */}
-        <GlassCard className="lg:col-span-3">
-          <h3 className="text-xl font-bold text-foreground mb-4">Account Settings</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors">
-              <h4 className="font-semibold text-foreground mb-2">Change Password</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Update your password to keep your account secure
-              </p>
-              <Button variant="outline" className="w-full">
-                Update Password
-              </Button>
-            </div>
-            <div className="p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors">
-              <h4 className="font-semibold text-foreground mb-2">Notification Preferences</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Manage how you receive notifications
-              </p>
-              <Button variant="outline" className="w-full">
-                Manage Notifications
-              </Button>
-            </div>
-            <div className="p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors">
-              <h4 className="font-semibold text-foreground mb-2">Payment Methods</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Add or remove payment methods
-              </p>
-              <Button variant="outline" className="w-full">
-                Manage Payments
-              </Button>
-            </div>
-            <div className="p-4 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors">
-              <h4 className="font-semibold text-red-700 dark:text-red-300 mb-2">Delete Account</h4>
-              <p className="text-sm text-red-600 dark:text-red-400 mb-3">
-                Permanently delete your account and all data
-              </p>
-              <Button variant="outline" className="w-full border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950">
-                Delete Account
-              </Button>
-            </div>
-          </div>
-        </GlassCard>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

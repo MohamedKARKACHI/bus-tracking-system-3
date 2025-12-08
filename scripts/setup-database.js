@@ -17,7 +17,7 @@ const rl = readline.createInterface({
 
 // Database configuration
 const DB_CONFIG = {
-  host: 'localhost',
+  host: '127.0.0.1',
   port: 8889,
   user: 'root',
   password: 'root',
@@ -25,18 +25,18 @@ const DB_CONFIG = {
 };
 
 // MAMP MySQL path
-const MYSQL_PATH = '/Applications/MAMP/Library/bin/mysql';
+const MYSQL_PATH = 'mysql';
 
 // Check if MySQL executable exists
 function checkMySQLExists() {
-  return fs.existsSync(MYSQL_PATH);
+  return true;
 }
 
 // Test MySQL connection
 function testConnection() {
   return new Promise((resolve, reject) => {
     const testCmd = `"${MYSQL_PATH}" -h ${DB_CONFIG.host} -P ${DB_CONFIG.port} -u ${DB_CONFIG.user} -p${DB_CONFIG.password} -e "SELECT 1;" 2>&1`;
-    
+
     exec(testCmd, (error, stdout, stderr) => {
       if (error) {
         reject(new Error('Cannot connect to MySQL. Please ensure MAMP is running.'));
@@ -51,14 +51,14 @@ function testConnection() {
 function importSQL(filePath) {
   return new Promise((resolve, reject) => {
     const absolutePath = path.resolve(__dirname, '..', filePath);
-    
+
     if (!fs.existsSync(absolutePath)) {
       reject(new Error(`SQL file not found: ${absolutePath}`));
       return;
     }
 
     const cmd = `"${MYSQL_PATH}" -h ${DB_CONFIG.host} -P ${DB_CONFIG.port} -u ${DB_CONFIG.user} -p${DB_CONFIG.password} < "${absolutePath}" 2>&1`;
-    
+
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
         // Check if error is just a warning about password on command line
@@ -143,7 +143,7 @@ async function setupDatabase() {
 function promptSetup() {
   rl.question('\n🔧 Would you like to setup the database now? (y/N): ', (answer) => {
     rl.close();
-    
+
     if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       setupDatabase();
     } else {

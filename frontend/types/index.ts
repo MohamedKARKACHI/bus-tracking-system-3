@@ -16,27 +16,35 @@ export interface Driver {
   user_id: number
   license_number: string
   license_expiry: Date
-  status: 'available' | 'on_duty' | 'off_duty' | 'on_leave'
+  status: 'available' | 'on_duty' | 'off_duty' | 'on_leave' | 'active'
   rating: number
   total_trips: number
   created_at: Date
   updated_at: Date
+  full_name?: string
+  phone_number?: string
+  email?: string
+  current_bus_id?: number | null
+  current_route_id?: number | null
 }
 
 export interface Bus {
   id: number
   bus_number: string
   plate_number: string
+  registration_number?: string
   model: string
   capacity: number
   year: number
   status: 'active' | 'maintenance' | 'out_of_service'
   last_maintenance: Date | null
   next_maintenance: Date | null
+  next_service_date?: Date | string | null
   fuel_type: 'diesel' | 'electric' | 'hybrid' | 'cng'
   current_driver_id: number | null
   created_at: Date
   updated_at: Date
+  mileage?: number
 }
 
 export interface Route {
@@ -86,11 +94,16 @@ export interface Ticket {
   boarding_stop_id: number
   destination_stop_id: number
   fare: number
-  status: 'booked' | 'confirmed' | 'cancelled' | 'used'
+  price?: number
+  status: 'booked' | 'confirmed' | 'cancelled' | 'used' | 'pending'
   booking_date: Date
   payment_status: 'pending' | 'paid' | 'refunded'
   payment_method: 'cash' | 'card' | 'mobile' | 'wallet'
   qr_code: string | null
+  passenger_name?: string
+  passenger_email?: string
+  route_id?: number
+  travel_time?: string
 }
 
 export interface GPSTracking {

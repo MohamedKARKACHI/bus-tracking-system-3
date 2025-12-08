@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Navigation, MapPin, Clock, Users, TrendingUp, Filter, Search, Star, Route, Calendar, ChevronRight, BarChart3, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export default function MyRoutesPage() {
   const { sidebarExpanded } = useDriverSidebar()
@@ -23,22 +24,23 @@ export default function MyRoutesPage() {
 
   const fetchRoutes = async () => {
     try {
-      const response = await fetch('/api/routes')
+      const response = await fetchWithAuth('/api/routes')
       if (response.ok) {
         const data = await response.json()
-        setRoutes(data)
+        // Ensure data is an array
+        setRoutes(Array.isArray(data) ? data : [])
       } else {
         // Enhanced fallback data with comprehensive route details
         setRoutes([
-          { 
-            id: "RT-001", 
-            name: "Downtown Loop", 
-            code: "Route A", 
-            stops: 12, 
-            distance: "24.5 km", 
+          {
+            id: "RT-001",
+            name: "Downtown Loop",
+            code: "Route A",
+            stops: 12,
+            distance: "24.5 km",
             duration: "2h 15m",
-            avgPassengers: 145, 
-            completionRate: 96, 
+            avgPassengers: 145,
+            completionRate: 96,
             onTimeRate: 94,
             totalTrips: 248,
             rating: 4.8,
@@ -47,15 +49,15 @@ export default function MyRoutesPage() {
             firstStop: "Central Station",
             lastStop: "City Mall"
           },
-          { 
-            id: "RT-002", 
-            name: "University Express", 
-            code: "Route B", 
-            stops: 8, 
-            distance: "18.2 km", 
+          {
+            id: "RT-002",
+            name: "University Express",
+            code: "Route B",
+            stops: 8,
+            distance: "18.2 km",
             duration: "1h 45m",
-            avgPassengers: 112, 
-            completionRate: 94, 
+            avgPassengers: 112,
+            completionRate: 94,
             onTimeRate: 92,
             totalTrips: 186,
             rating: 4.6,
@@ -64,15 +66,15 @@ export default function MyRoutesPage() {
             firstStop: "Main Campus",
             lastStop: "Tech Park"
           },
-          { 
-            id: "RT-003", 
-            name: "Airport Shuttle", 
-            code: "Route C", 
-            stops: 6, 
-            distance: "32.8 km", 
+          {
+            id: "RT-003",
+            name: "Airport Shuttle",
+            code: "Route C",
+            stops: 6,
+            distance: "32.8 km",
             duration: "1h 30m",
-            avgPassengers: 78, 
-            completionRate: 98, 
+            avgPassengers: 78,
+            completionRate: 98,
             onTimeRate: 96,
             totalTrips: 142,
             rating: 4.9,
@@ -81,15 +83,15 @@ export default function MyRoutesPage() {
             firstStop: "Airport Terminal",
             lastStop: "Downtown Hub"
           },
-          { 
-            id: "RT-004", 
-            name: "Shopping District", 
-            code: "Route D", 
-            stops: 10, 
-            distance: "16.5 km", 
+          {
+            id: "RT-004",
+            name: "Shopping District",
+            code: "Route D",
+            stops: 10,
+            distance: "16.5 km",
             duration: "2h 00m",
-            avgPassengers: 128, 
-            completionRate: 93, 
+            avgPassengers: 128,
+            completionRate: 93,
             onTimeRate: 90,
             totalTrips: 215,
             rating: 4.5,
@@ -98,15 +100,15 @@ export default function MyRoutesPage() {
             firstStop: "Plaza Center",
             lastStop: "Fashion District"
           },
-          { 
-            id: "RT-005", 
-            name: "Evening Commute", 
-            code: "Route E", 
-            stops: 14, 
-            distance: "28.3 km", 
+          {
+            id: "RT-005",
+            name: "Evening Commute",
+            code: "Route E",
+            stops: 14,
+            distance: "28.3 km",
             duration: "2h 30m",
-            avgPassengers: 165, 
-            completionRate: 95, 
+            avgPassengers: 165,
+            completionRate: 95,
             onTimeRate: 93,
             totalTrips: 198,
             rating: 4.7,
@@ -115,15 +117,15 @@ export default function MyRoutesPage() {
             firstStop: "Business District",
             lastStop: "Residential Area"
           },
-          { 
-            id: "RT-006", 
-            name: "Coastal Route", 
-            code: "Route F", 
-            stops: 9, 
-            distance: "21.7 km", 
+          {
+            id: "RT-006",
+            name: "Coastal Route",
+            code: "Route F",
+            stops: 9,
+            distance: "21.7 km",
             duration: "1h 50m",
-            avgPassengers: 95, 
-            completionRate: 97, 
+            avgPassengers: 95,
+            completionRate: 97,
             onTimeRate: 95,
             totalTrips: 176,
             rating: 4.8,
@@ -137,15 +139,15 @@ export default function MyRoutesPage() {
     } catch (error) {
       console.error('Failed to fetch routes:', error)
       setRoutes([
-        { 
-          id: "RT-001", 
-          name: "Downtown Loop", 
-          code: "Route A", 
-          stops: 12, 
-          distance: "24.5 km", 
+        {
+          id: "RT-001",
+          name: "Downtown Loop",
+          code: "Route A",
+          stops: 12,
+          distance: "24.5 km",
           duration: "2h 15m",
-          avgPassengers: 145, 
-          completionRate: 96, 
+          avgPassengers: 145,
+          completionRate: 96,
           onTimeRate: 94,
           totalTrips: 248,
           rating: 4.8,
@@ -154,15 +156,15 @@ export default function MyRoutesPage() {
           firstStop: "Central Station",
           lastStop: "City Mall"
         },
-        { 
-          id: "RT-002", 
-          name: "University Express", 
-          code: "Route B", 
-          stops: 8, 
-          distance: "18.2 km", 
+        {
+          id: "RT-002",
+          name: "University Express",
+          code: "Route B",
+          stops: 8,
+          distance: "18.2 km",
           duration: "1h 45m",
-          avgPassengers: 112, 
-          completionRate: 94, 
+          avgPassengers: 112,
+          completionRate: 94,
           onTimeRate: 92,
           totalTrips: 186,
           rating: 4.6,
@@ -171,15 +173,15 @@ export default function MyRoutesPage() {
           firstStop: "Main Campus",
           lastStop: "Tech Park"
         },
-        { 
-          id: "RT-003", 
-          name: "Airport Shuttle", 
-          code: "Route C", 
-          stops: 6, 
-          distance: "32.8 km", 
+        {
+          id: "RT-003",
+          name: "Airport Shuttle",
+          code: "Route C",
+          stops: 6,
+          distance: "32.8 km",
           duration: "1h 30m",
-          avgPassengers: 78, 
-          completionRate: 98, 
+          avgPassengers: 78,
+          completionRate: 98,
           onTimeRate: 96,
           totalTrips: 142,
           rating: 4.9,
@@ -188,15 +190,15 @@ export default function MyRoutesPage() {
           firstStop: "Airport Terminal",
           lastStop: "Downtown Hub"
         },
-        { 
-          id: "RT-004", 
-          name: "Shopping District", 
-          code: "Route D", 
-          stops: 10, 
-          distance: "16.5 km", 
+        {
+          id: "RT-004",
+          name: "Shopping District",
+          code: "Route D",
+          stops: 10,
+          distance: "16.5 km",
           duration: "2h 00m",
-          avgPassengers: 128, 
-          completionRate: 93, 
+          avgPassengers: 128,
+          completionRate: 93,
           onTimeRate: 90,
           totalTrips: 215,
           rating: 4.5,
@@ -205,15 +207,15 @@ export default function MyRoutesPage() {
           firstStop: "Plaza Center",
           lastStop: "Fashion District"
         },
-        { 
-          id: "RT-005", 
-          name: "Evening Commute", 
-          code: "Route E", 
-          stops: 14, 
-          distance: "28.3 km", 
+        {
+          id: "RT-005",
+          name: "Evening Commute",
+          code: "Route E",
+          stops: 14,
+          distance: "28.3 km",
           duration: "2h 30m",
-          avgPassengers: 165, 
-          completionRate: 95, 
+          avgPassengers: 165,
+          completionRate: 95,
           onTimeRate: 93,
           totalTrips: 198,
           rating: 4.7,
@@ -222,15 +224,15 @@ export default function MyRoutesPage() {
           firstStop: "Business District",
           lastStop: "Residential Area"
         },
-        { 
-          id: "RT-006", 
-          name: "Coastal Route", 
-          code: "Route F", 
-          stops: 9, 
-          distance: "21.7 km", 
+        {
+          id: "RT-006",
+          name: "Coastal Route",
+          code: "Route F",
+          stops: 9,
+          distance: "21.7 km",
           duration: "1h 50m",
-          avgPassengers: 95, 
-          completionRate: 97, 
+          avgPassengers: 95,
+          completionRate: 97,
           onTimeRate: 95,
           totalTrips: 176,
           rating: 4.8,
@@ -245,21 +247,21 @@ export default function MyRoutesPage() {
     }
   }
 
-  const filteredRoutes = routes
+  const filteredRoutes = (Array.isArray(routes) ? routes : [])
     .filter(r => filter === "all" ? true : r.status === filter)
-    .filter(r => 
-      searchQuery === "" ? true : 
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.code.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter(r =>
+      searchQuery === "" ? true :
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.code.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
   // Calculate stats
-  const totalRoutes = routes.length
-  const activeRoutes = routes.filter(r => r.status === "active").length
-  const avgCompletionRate = routes.length > 0 
-    ? routes.reduce((acc, r) => acc + (r.completionRate || 0), 0) / routes.length 
+  const totalRoutes = (Array.isArray(routes) ? routes : []).length
+  const activeRoutes = (Array.isArray(routes) ? routes : []).filter(r => r.status === "active").length
+  const avgCompletionRate = (Array.isArray(routes) ? routes : []).length > 0
+    ? (Array.isArray(routes) ? routes : []).reduce((acc, r) => acc + (r.completionRate || 0), 0) / (Array.isArray(routes) ? routes : []).length
     : 0
-  const totalTrips = routes.reduce((acc, r) => acc + (r.totalTrips || 0), 0)
+  const totalTrips = (Array.isArray(routes) ? routes : []).reduce((acc, r) => acc + (r.totalTrips || 0), 0)
 
   if (loading) {
     return (
@@ -347,8 +349,8 @@ export default function MyRoutesPage() {
             onClick={() => setFilter("all")}
             className={cn(
               "px-4 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2",
-              filter === "all" 
-                ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg" 
+              filter === "all"
+                ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
                 : "bg-muted hover:bg-muted/80 text-muted-foreground"
             )}
           >
@@ -358,8 +360,8 @@ export default function MyRoutesPage() {
             onClick={() => setFilter("active")}
             className={cn(
               "px-4 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2",
-              filter === "active" 
-                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" 
+              filter === "active"
+                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg"
                 : "bg-muted hover:bg-muted/80 text-muted-foreground"
             )}
           >
@@ -369,8 +371,8 @@ export default function MyRoutesPage() {
             onClick={() => setFilter("completed")}
             className={cn(
               "px-4 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2",
-              filter === "completed" 
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" 
+              filter === "completed"
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
                 : "bg-muted hover:bg-muted/80 text-muted-foreground"
             )}
           >
@@ -489,7 +491,7 @@ export default function MyRoutesPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <button 
+                <button
                   onClick={() => router.push(`/driver-portal/routes/${route.id}`)}
                   className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                 >
@@ -497,7 +499,7 @@ export default function MyRoutesPage() {
                   View Details
                 </button>
                 {route.status === "active" && (
-                  <button 
+                  <button
                     onClick={() => router.push('/driver-portal/track-route')}
                     className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                   >

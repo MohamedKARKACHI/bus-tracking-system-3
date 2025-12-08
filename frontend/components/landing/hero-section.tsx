@@ -19,7 +19,7 @@ export function HeroSection() {
     <section className="relative min-h-screen flex items-center overflow-hidden bg-background">
       {/* Dynamic gradient mesh background */}
       <div className="absolute inset-0 opacity-30 dark:opacity-50">
-        <div 
+        <div
           className="absolute w-[500px] h-[500px] rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 blur-[120px] transition-transform duration-1000 ease-out"
           style={{
             transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`,
@@ -27,7 +27,7 @@ export function HeroSection() {
             top: '20%'
           }}
         />
-        <div 
+        <div
           className="absolute w-[600px] h-[600px] rounded-full bg-gradient-to-r from-purple-500 to-pink-500 blur-[120px] transition-transform duration-1000 ease-out"
           style={{
             transform: `translate(${-mousePosition.x * 0.02}px, ${-mousePosition.y * 0.02}px)`,
@@ -42,10 +42,10 @@ export function HeroSection() {
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          
+
           {/* Left Content */}
           <div className="space-y-8 animate-in fade-in slide-in-from-left-10 duration-1000">
-            
+
             {/* Status Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-sm">
               <div className="relative flex h-2 w-2">
@@ -70,7 +70,7 @@ export function HeroSection() {
                   Revolution
                 </span>
               </h1>
-              
+
               <p className="text-lg sm:text-xl text-muted-foreground dark:text-slate-300 max-w-2xl leading-relaxed">
                 Experience seamless bus travel across <span className="font-semibold text-cyan-500">Marrakech</span>, <span className="font-semibold text-blue-500">Casablanca</span> & <span className="font-semibold text-purple-500">Tangier</span>. Real-time tracking, instant booking, live updates.
               </p>
@@ -79,7 +79,7 @@ export function HeroSection() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/book-ticket"
+                href="/client-portal/book-ticket"
                 className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -87,7 +87,7 @@ export function HeroSection() {
                 <span className="relative z-10">Book Your Ticket</span>
                 <ArrowRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
               </Link>
-              
+
               <Link
                 href="/tracking"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-foreground/10 dark:border-white/10 bg-background/50 backdrop-blur-sm text-foreground dark:text-white font-semibold hover:bg-foreground/5 dark:hover:bg-white/5 transition-all duration-300"
@@ -108,7 +108,7 @@ export function HeroSection() {
                 <p className="text-3xl font-bold text-foreground dark:text-white">16</p>
                 <p className="text-sm text-muted-foreground dark:text-slate-400">Active Buses</p>
               </div>
-              
+
               <div className="space-y-2 group cursor-pointer">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 group-hover:bg-blue-500/20 dark:group-hover:bg-blue-500/30 transition-colors">
@@ -118,7 +118,7 @@ export function HeroSection() {
                 <p className="text-3xl font-bold text-foreground dark:text-white">25</p>
                 <p className="text-sm text-muted-foreground dark:text-slate-400">Bus Stops</p>
               </div>
-              
+
               <div className="space-y-2 group cursor-pointer">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 group-hover:bg-purple-500/20 dark:group-hover:bg-purple-500/30 transition-colors">
@@ -133,10 +133,10 @@ export function HeroSection() {
 
           {/* Right Visual - Interactive Cards */}
           <div className="relative animate-in fade-in slide-in-from-right-10 duration-1000 delay-300">
-            
+
             {/* Main card container */}
             <div className="relative">
-              
+
               {/* Floating cards */}
               <div className="absolute -top-8 -left-8 z-20 animate-float">
                 <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-3xl p-6 shadow-2xl shadow-cyan-500/30 backdrop-blur-sm border border-white/20">

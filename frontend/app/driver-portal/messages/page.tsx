@@ -1,240 +1,334 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { GlassCard } from "@/components/ui/glass-card"
-import { useDriverSidebar } from "@/lib/driver-sidebar-context"
 import { useAuth } from "@/lib/auth-context"
-import { Clock, User, Send, MessageCircle, CheckCheck, Circle } from "lucide-react"
+import { GlassCard } from "@/components/ui/glass-card"
+import { fetchWithAuth } from "@/lib/api-client"
+import {
+  MessageSquare, Search, MoreVertical, Phone, Video,
+  Send, Paperclip, Mic, ArrowLeft, Camera, Image as ImageIcon,
+  Check, CheckCheck, Circle
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
+// Types
+type Message = {
+  id: string
+  content: string
+  sender: 'me' | 'other'
+  timestamp: string
+  status: 'sent' | 'delivered' | 'read'
+  type: 'text' | 'image' | 'voice'
+}
+
+type Conversation = {
+  id: string
+  name: string
+  avatar: string
+  lastMessage: string
+  time: string
+  unread: number
+  online: boolean
+  messages: Message[]
+}
+
 export default function MessagesPage() {
-  const { sidebarExpanded } = useDriverSidebar()
   const { user } = useAuth()
-  const [newMessage, setNewMessage] = useState("")
-  const [messages, setMessages] = useState<any[]>([])
-  const [selectedConversation, setSelectedConversation] = useState<any>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [inputMessage, setInputMessage] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchMessages()
+    fetchConversations()
   }, [])
 
-  const fetchMessages = async () => {
+  useEffect(() => {
+    if (selectedId) {
+      fetchMessages(selectedId)
+    }
+  }, [selectedId])
+
+  const fetchConversations = async () => {
     try {
-      const response = await fetch('/api/messages')
+      const response = await fetchWithAuth('/api/messages/conversations')
       if (response.ok) {
         const data = await response.json()
-        setMessages(data)
-        if (data.length > 0) setSelectedConversation(data[0])
-      } else {
-        // Fallback test data
-        const fallbackData = [
-          { id: 1, from: 'Dispatch Center', message: 'Route A schedule updated for tomorrow', time: '10 min ago', unread: true },
-          { id: 2, from: 'Fleet Manager', message: 'Great job on maintaining punctuality!', time: '1 hour ago', unread: false },
-          { id: 3, from: 'Dispatch Center', message: 'Weather alert: Heavy rain expected this afternoon', time: '2 hours ago', unread: false },
-          { id: 4, from: 'Support Team', message: 'Your vehicle maintenance is scheduled for Friday', time: '1 day ago', unread: false },
-        ]
-        setMessages(fallbackData)
-        setSelectedConversation(fallbackData[0])
+        setConversations(data)
       }
     } catch (error) {
-      console.error('Failed to fetch messages:', error)
-      // Fallback test data
-      const fallbackData = [
-        { id: 1, from: 'Dispatch Center', message: 'Route A schedule updated for tomorrow', time: '10 min ago', unread: true },
-        { id: 2, from: 'Fleet Manager', message: 'Great job on maintaining punctuality!', time: '1 hour ago', unread: false },
-        { id: 3, from: 'Dispatch Center', message: 'Weather alert: Heavy rain expected this afternoon', time: '2 hours ago', unread: false },
-      ]
-      setMessages(fallbackData)
-      setSelectedConversation(fallbackData[0])
+      console.error('Failed to fetch conversations:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return
+  const fetchMessages = async (userId: string) => {
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: newMessage, to: 'dispatch' })
-      })
+      const response = await fetchWithAuth(`/api/messages/${userId}`)
       if (response.ok) {
-        setNewMessage("")
-        fetchMessages()
+        const data = await response.json()
+        const formattedMessages: Message[] = data.map((msg: any) => ({
+          id: msg.id.toString(),
+          content: msg.message,
+          sender: msg.sender_id === user?.id ? 'me' : 'other',
+          timestamp: new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: msg.is_read ? 'read' : 'sent',
+          type: 'text'
+        }))
+
+        setConversations(prev => prev.map(conv => {
+          if (conv.id === userId) {
+            return { ...conv, messages: formattedMessages }
+          }
+          return conv
+        }))
       }
     } catch (error) {
-      console.error('Failed to send message:', error)
+      console.error('Failed to fetch messages:', error)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+  const selectedConversation = conversations.find(c => c.id === selectedId)
+
+  // Mobile: Handle back button behavior
+  const handleBack = () => setSelectedId(null)
+
+  const handleSend = async () => {
+    if (!inputMessage.trim() || !selectedId) return
+
+    const tempId = Date.now().toString()
+    const messageContent = inputMessage
+    setInputMessage("")
+
+    // Optimistic update
+    setConversations(prev => prev.map(conv => {
+      if (conv.id === selectedId) {
+        return {
+          ...conv,
+          lastMessage: messageContent,
+          time: 'Just now',
+          messages: [
+            ...conv.messages,
+            {
+              id: tempId,
+              content: messageContent,
+              sender: 'me',
+              timestamp: 'Just now',
+              status: 'sent',
+              type: 'text'
+            }
+          ]
+        }
+      }
+      return conv
+    }))
+
+    try {
+      const response = await fetchWithAuth('/api/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          receiver_id: selectedId,
+          message: messageContent
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to send message')
+      }
+      
+      // Refresh messages to get the real ID and timestamp
+      fetchMessages(selectedId)
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // TODO: Show error state or revert optimistic update
+    }
   }
 
   return (
-    <main
-      className={cn(
-        "flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/20",
-        sidebarExpanded ? "lg:ml-0" : "lg:ml-0",
-      )}
-    >
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-          <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
-            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+    <div className="h-[calc(100vh-80px)] lg:h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4 p-4 lg:p-6 overflow-hidden">
+
+      {/* List View - Hidden on Mobile if chat is selected */}
+      <div className={cn(
+        "flex-1 lg:max-w-md flex flex-col bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl overflow-hidden transition-all duration-300",
+        selectedId ? "hidden lg:flex" : "flex"
+      )}>
+        {/* Header */}
+        <div className="p-4 border-b border-border/50">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Messages</h1>
+            <div className="flex gap-2">
+              <button className="p-2 rounded-full hover:bg-muted"><MoreVertical className="h-5 w-5" /></button>
+            </div>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Messages</h1>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-muted/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
         </div>
-        <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">Communication with dispatch and management</p>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-2 pb-24 lg:pb-2">
+          {conversations.map(conv => (
+            <button
+              key={conv.id}
+              onClick={() => setSelectedId(conv.id)}
+              className={cn(
+                "w-full p-3 rounded-xl flex gap-3 transition-all text-left group",
+                selectedId === conv.id ? "bg-blue-600/10 border-blue-600/20" : "hover:bg-muted/50 border-transparent border"
+              )}
+            >
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+                  {conv.avatar}
+                </div>
+                {conv.online && (
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-semibold truncate">{conv.name}</h3>
+                  <span className="text-xs text-muted-foreground">{conv.time}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground truncate max-w-[80%]">{conv.lastMessage}</p>
+                  {conv.unread > 0 && (
+                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                      {conv.unread}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        {/* Conversations List */}
-        <div className="lg:col-span-1">
-          <GlassCard className="p-3 sm:p-4 border-2 border-primary/10">
-            <h3 className="text-[10px] sm:text-xs lg:text-sm font-bold text-muted-foreground mb-3 sm:mb-4 flex items-center gap-2">
-              <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              CONVERSATIONS ({messages.length})
-            </h3>
-            <div className="space-y-2">
-              {messages.map((msg) => (
-                <button
-                  key={msg.id}
-                  onClick={() => setSelectedConversation(msg)}
-                  className={cn(
-                    "w-full p-2.5 sm:p-3 lg:p-4 rounded-xl text-left transition-all border-2",
-                    msg.unread 
-                      ? "bg-blue-500/10 border-blue-500/30 shadow-md" 
-                      : "border-transparent hover:border-primary/20 hover:bg-accent",
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-1.5 sm:mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <div className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md flex-shrink-0">
-                          <User className="h-4 w-4 sm:h-4.5 sm:w-4.5 lg:h-5 lg:w-5 text-white" />
-                        </div>
-                        {msg.unread && (
-                          <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 border-2 border-background animate-pulse" />
-                        )}
-                      </div>
-                      <span className="font-semibold text-xs sm:text-sm text-foreground">{msg.from}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{msg.message}</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {msg.time}
-                    </p>
-                    {msg.unread && (
-                      <div className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-bold">
-                        NEW
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </GlassCard>
-        </div>
-
-        {/* Chat Window */}
-        <div className="lg:col-span-2">
-          <GlassCard className="p-3 sm:p-4 lg:p-6 h-[450px] sm:h-[500px] lg:h-[600px] flex flex-col border-2 border-primary/10">
+      {/* Chat View - Full Screen on Mobile */}
+      <div className={cn(
+        "bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl flex flex-col overflow-hidden transition-all duration-300",
+        !selectedId
+          ? "hidden lg:flex items-center justify-center flex-[2] h-[600px]"
+          : "fixed inset-0 z-50 bg-background flex flex-col lg:static lg:inset-auto lg:bg-card/50 lg:flex-[2] lg:h-[600px]"
+      )}>
+        {selectedConversation ? (
+          <>
             {/* Chat Header */}
-            <div className="flex items-center gap-3 pb-4 border-b-2 border-border">
+            <div className="p-4 border-b border-border/50 flex items-center gap-3 bg-card/95 backdrop-blur-sm lg:bg-transparent shrink-0">
+              <button onClick={handleBack} className="lg:hidden p-2 -ml-2 rounded-full hover:bg-muted">
+                <ArrowLeft className="h-6 w-6" />
+              </button>
+
               <div className="relative">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
-                  <User className="h-6 w-6 text-white" />
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold shadow-sm">
+                  {selectedConversation.avatar}
                 </div>
-                <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background" />
+                {selectedConversation.online && (
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
+                )}
               </div>
+
               <div className="flex-1">
-                <h3 className="font-bold text-base sm:text-lg text-foreground">Dispatch Center</h3>
+                <h2 className="font-bold text-base leading-tight">{selectedConversation.name}</h2>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Circle className="h-2 w-2 fill-emerald-500 text-emerald-500" />
-                  Active now
+                  {selectedConversation.online ? 'Online' : 'Offline'}
                 </p>
               </div>
+
+              <div className="flex items-center gap-1">
+                <button className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
+                  <Phone className="h-5 w-5" />
+                </button>
+                <button className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
+                  <Video className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 py-4 sm:py-6 space-y-4 overflow-y-auto">
-              {/* Received Message */}
-              <div className="flex gap-3 animate-in slide-in-from-left">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div className="flex-1 max-w-[80%]">
-                  <div className="bg-gradient-to-br from-accent to-muted/50 rounded-2xl rounded-tl-sm p-3 sm:p-4 border border-border shadow-sm">
-                    <p className="text-sm text-foreground">Route A schedule updated for tomorrow. Please check the new timing in your schedule.</p>
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-transparent to-muted/20 scroll-smooth">
+              {selectedConversation.messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    "flex gap-3 max-w-[85%] lg:max-w-[70%]",
+                    msg.sender === 'me' ? "ml-auto flex-row-reverse" : ""
+                  )}
+                >
+                  <div className={cn(
+                    "p-3 lg:p-4 rounded-2xl shadow-sm",
+                    msg.sender === 'me'
+                      ? "bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-tr-sm"
+                      : "bg-muted border border-border/50 rounded-tl-sm"
+                  )}>
+                    <p className="text-sm lg:text-base leading-relaxed">{msg.content}</p>
+                    <div className={cn(
+                      "flex items-center gap-1 text-[10px] mt-1 opacity-70",
+                      msg.sender === 'me' ? "justify-end text-white" : "text-muted-foreground"
+                    )}>
+                      <span>{msg.timestamp}</span>
+                      {msg.sender === 'me' && (
+                        msg.status === 'read' ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    10 min ago
-                  </p>
                 </div>
-              </div>
-
-              {/* Sent Message */}
-              <div className="flex gap-3 justify-end animate-in slide-in-from-right">
-                <div className="flex-1 max-w-[80%]">
-                  <div className="bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl rounded-tr-sm p-3 sm:p-4 shadow-lg ml-auto">
-                    <p className="text-sm text-white">Acknowledged. Thanks for the update! I'll review the new schedule now.</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 text-right flex items-center gap-1 justify-end">
-                    <CheckCheck className="h-3 w-3" />
-                    5 min ago
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 animate-in slide-in-from-left">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div className="flex-1 max-w-[80%]">
-                  <div className="bg-gradient-to-br from-accent to-muted/50 rounded-2xl rounded-tl-sm p-3 sm:p-4 border border-border shadow-sm">
-                    <p className="text-sm text-foreground">Perfect! Let me know if you have any questions.</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Just now
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Input Area */}
-            <div className="pt-4 border-t-2 border-border">
-              <div className="flex gap-2 sm:gap-3">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 rounded-xl bg-muted border-2 border-border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-foreground placeholder:text-muted-foreground transition-all"
-                />
-                <button 
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  className="px-4 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            <div className="shrink-0 p-3 lg:p-4 lg:pb-4 border-t border-border/50 bg-card/95 backdrop-blur-sm lg:bg-transparent pb-safe-bottom mb-24 lg:mb-0">
+              <div className="flex items-end gap-2">
+                <div className="flex gap-1 pb-2">
+                  <label className="p-2 rounded-xl hover:bg-muted cursor-pointer transition-colors active:scale-95">
+                    <Camera className="h-6 w-6 text-blue-500" />
+                    <input type="file" accept="image/*" capture="environment" className="hidden" />
+                  </label>
+                  <label className="p-2 rounded-xl hover:bg-muted cursor-pointer transition-colors active:scale-95">
+                    <ImageIcon className="h-6 w-6 text-purple-500" />
+                    <input type="file" accept="image/*" className="hidden" />
+                  </label>
+                </div>
+
+                <div className="flex-1 bg-muted/50 rounded-2xl border border-border/50 flex items-center pr-2 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 min-h-[48px]"
+                  />
+                  <button className="p-2 text-muted-foreground hover:text-foreground">
+                    <Mic className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleSend}
+                  disabled={!inputMessage.trim()}
+                  className="p-3 rounded-full bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 transition-all"
                 >
                   <Send className="h-5 w-5" />
                 </button>
               </div>
             </div>
-          </GlassCard>
-        </div>
+          </>
+        ) : (
+          <div className="hidden lg:flex flex-col items-center justify-center h-full text-muted-foreground">
+            <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center mb-4">
+              <MessageSquare className="h-10 w-10 opacity-50" />
+            </div>
+            <h3 className="text-xl font-bold">Select a conversation</h3>
+            <p className="text-sm opacity-70">Choose a chat to start messaging</p>
+          </div>
+        )}
       </div>
-    </main>
+    </div>
   )
 }

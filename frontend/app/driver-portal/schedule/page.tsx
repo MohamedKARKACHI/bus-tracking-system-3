@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { Calendar, Clock, Navigation, CheckCircle2, MapPin, Users, TrendingUp, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export default function SchedulePage() {
   const { sidebarExpanded } = useDriverSidebar()
@@ -132,9 +133,9 @@ export default function SchedulePage() {
   const fetchSchedules = async () => {
     // Always use fallback data to ensure stats show correctly
     try {
-      const response = await fetch('/api/schedules')
+      const response = await fetchWithAuth('/api/schedules')
       const fallbackData = generateScheduleData()
-      
+
       if (response.ok) {
         try {
           const data = await response.json()
@@ -163,11 +164,11 @@ export default function SchedulePage() {
 
   // Calculate stats from schedules
   const totalShifts = schedules.reduce((acc, day) => acc + day.shifts.length, 0)
-  const activeShifts = schedules.reduce((acc, day) => 
+  const activeShifts = schedules.reduce((acc, day) =>
     acc + day.shifts.filter(s => s.status === 'active').length, 0)
-  const completedShifts = schedules.reduce((acc, day) => 
+  const completedShifts = schedules.reduce((acc, day) =>
     acc + day.shifts.filter(s => s.status === 'completed').length, 0)
-  const totalHours = schedules.reduce((acc, day) => 
+  const totalHours = schedules.reduce((acc, day) =>
     acc + day.shifts.reduce((sum, shift) => sum + parseInt(shift.duration || '0'), 0), 0)
 
   return (
@@ -317,7 +318,7 @@ export default function SchedulePage() {
 
                   {/* Action Buttons */}
                   {shift.status === "active" && (
-                    <button 
+                    <button
                       onClick={() => router.push('/driver-portal/track-route')}
                       className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                     >
@@ -326,7 +327,7 @@ export default function SchedulePage() {
                     </button>
                   )}
                   {shift.status === "scheduled" && (
-                    <button 
+                    <button
                       className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                     >
                       <Calendar className="h-4 w-4" />

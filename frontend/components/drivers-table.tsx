@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { User, Phone, Mail, Clock, Loader2 } from "lucide-react"
 import { GlassCard } from "./ui/glass-card"
 import type { Driver } from "@/types"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export function DriversTable() {
   const [drivers, setDrivers] = useState<Driver[]>([])
@@ -17,12 +18,7 @@ export function DriversTable() {
   const fetchDrivers = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/drivers', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchWithAuth('/api/drivers')
 
       if (!response.ok) {
         throw new Error('Failed to fetch drivers')
@@ -54,7 +50,7 @@ export function DriversTable() {
         <div className="text-center text-red-500">
           <p className="font-semibold">Error loading drivers</p>
           <p className="text-sm mt-2">{error}</p>
-          <button 
+          <button
             onClick={fetchDrivers}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
           >
@@ -107,11 +103,10 @@ export function DriversTable() {
                 </td>
                 <td className="p-4">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      driver.status === "active"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-muted/20 text-muted-foreground"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${driver.status === "active"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-muted/20 text-muted-foreground"
+                      }`}
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     {driver.status}

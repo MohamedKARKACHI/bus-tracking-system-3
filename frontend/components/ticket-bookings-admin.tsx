@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { Ticket, MapPin, CreditCard, Check, MoreVertical, Clock, Loader2 } from "lucide-react"
 import type { Ticket as TicketType } from "@/types"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export function TicketBookingsAdmin() {
   const [filter, setFilter] = useState("all")
@@ -18,12 +19,7 @@ export function TicketBookingsAdmin() {
   const fetchBookings = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/tickets', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchWithAuth('/api/tickets')
 
       if (!response.ok) {
         throw new Error('Failed to fetch tickets')
@@ -64,7 +60,7 @@ export function TicketBookingsAdmin() {
         <div className="text-center text-red-500">
           <p className="font-semibold">Error loading bookings</p>
           <p className="text-sm mt-2">{error}</p>
-          <button 
+          <button
             onClick={fetchBookings}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
           >
@@ -119,31 +115,28 @@ export function TicketBookingsAdmin() {
           <div className="flex items-center gap-2 mt-4 md:mt-0">
             <button
               onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "all"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
             >
               All
             </button>
             <button
               onClick={() => setFilter("confirmed")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "confirmed"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "confirmed"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
             >
               Confirmed
             </button>
             <button
               onClick={() => setFilter("pending")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === "pending"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "pending"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
             >
               Pending
             </button>
@@ -211,11 +204,10 @@ export function TicketBookingsAdmin() {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        booking.status === "confirmed"
-                          ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
-                          : "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === "confirmed"
+                        ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
+                        : "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300"
+                        }`}
                     >
                       {booking.status}
                     </span>

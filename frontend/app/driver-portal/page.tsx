@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { GlassCard } from "@/components/ui/glass-card"
 import { BusMap } from "@/components/bus-map"
-import { useDriverSidebar } from "@/lib/driver-sidebar-context"
+import { DriverIdCard } from "@/components/driver-id-card"
+import { useTheme } from "next-themes"
 import {
   MapPin,
   Clock,
@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   Navigation,
   Phone,
-  MessageSquare,
   Users,
   TrendingUp,
   Award,
@@ -21,24 +20,27 @@ import {
   Zap,
   Route,
   Bell,
-  Settings,
-  LogOut,
+  Loader2,
+  Circle,
+  MessageSquare,
+  Star,
+  Fuel,
+  Gauge,
+  ChevronDown
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { DriverIdCard } from "@/components/driver-id-card"
 
 export default function DriverPortalPage() {
+  const { theme } = useTheme()
   const { user, isLoading } = useAuth()
   const router = useRouter()
-  const { sidebarExpanded } = useDriverSidebar()
   const [currentTime, setCurrentTime] = useState(new Date())
-  
-  // Update time every second
+  const [isProfileExpanded, setIsProfileExpanded] = useState(true)
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
-  
+
   const [stats] = useState({
     todayTrips: 12,
     passengers: 247,
@@ -46,14 +48,18 @@ export default function DriverPortalPage() {
     distance: 142,
     rating: 4.8,
     totalTrips: 156,
+    fuel: 75,
+    speed: 45
   })
 
   const [currentRoute] = useState({
     name: "Route 1 - Marrakech Express",
+    busNumber: "BUS-101",
+    color: "#3b82f6",
     stops: [
       { id: 1, name: "Palmeraie", time: "08:00", status: "completed" },
-      { id: 2, name: "Gueliz", time: "08:15", status: "current", eta: 5 },
-      { id: 3, name: "Ben Youssef", time: "08:30", status: "upcoming" },
+      { id: 2, name: "Gueliz", time: "08:15", status: "completed" },
+      { id: 3, name: "Ben Youssef", time: "08:30", status: "active", eta: 5 },
       { id: 4, name: "Jemaa el Fna", time: "08:45", status: "upcoming" },
     ],
   })
@@ -85,294 +91,273 @@ export default function DriverPortalPage() {
 
   if (isLoading || !user || user.role !== "driver") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="w-16 h-16 text-cyan-500 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 dark:text-slate-400">Loading driver portal...</p>
         </div>
       </div>
     )
   }
 
+  const completedStops = currentRoute.stops.filter(s => s.status === "completed").length
+  const totalStops = currentRoute.stops.length
+  const progress = (completedStops / totalStops) * 100
 
   return (
-    <main className={cn(
-      "flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5",
-      "transition-all duration-300"
-    )}>
-      {/* Header Section */}
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-6 lg:p-8 transition-colors duration-300">
+      <div className="max-w-[1920px] mx-auto flex flex-col gap-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 order-1">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Driver Dashboard
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+              Welcome back, {user?.name?.split(' ')[0] || 'Driver'}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
               {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Active</span>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-100 dark:border-emerald-500/20">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="font-medium text-sm">On Duty</span>
             </div>
-            <div className="px-4 py-2 rounded-full bg-muted/50 border border-border">
-              <Clock className="h-4 w-4 inline mr-2 text-primary" />
-              <span className="text-sm font-semibold">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-700">
+              <Clock className="w-4 h-4" />
+              <span className="font-medium text-sm">
                 {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {/* Stats Overview */}
+        <div className="order-3 md:order-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {[
-            { label: "Today's Trips", value: stats.todayTrips, icon: Navigation, color: "blue" },
-            { label: "Passengers", value: stats.passengers, icon: Users, color: "purple" },
-            { label: "On-Time", value: `${stats.onTimePercent}%`, icon: CheckCircle2, color: "emerald" },
-            { label: "Distance", value: `${stats.distance}km`, icon: MapPin, color: "cyan" },
-            { label: "Rating", value: stats.rating, icon: Award, color: "amber" },
-            { label: "Total Trips", value: stats.totalTrips, icon: TrendingUp, color: "rose" },
+            { label: "Trips", value: stats.todayTrips, icon: Navigation, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
+            { label: "Passengers", value: stats.passengers, icon: Users, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-500/10" },
+            { label: "On-Time", value: `${stats.onTimePercent}%`, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+            { label: "Distance", value: `${stats.distance}km`, icon: MapPin, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-500/10" },
+            { label: "Rating", value: stats.rating, icon: Star, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
+            { label: "Total", value: stats.totalTrips, icon: TrendingUp, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-500/10" },
+            { label: "Fuel", value: `${stats.fuel}%`, icon: Fuel, color: "text-green-500", bg: "bg-green-50 dark:bg-green-500/10" },
+            { label: "Speed", value: `${stats.speed}km/h`, icon: Gauge, color: "text-red-500", bg: "bg-red-50 dark:bg-red-500/10" },
           ].map((stat, idx) => (
-            <GlassCard key={idx} className="p-3 hover:scale-105 transition-transform">
+            <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
-                <stat.icon className={cn(
-                  "h-4 w-4",
-                  stat.color === "blue" && "text-blue-500",
-                  stat.color === "purple" && "text-purple-500",
-                  stat.color === "emerald" && "text-emerald-500",
-                  stat.color === "cyan" && "text-cyan-500",
-                  stat.color === "amber" && "text-amber-500",
-                  stat.color === "rose" && "text-rose-500"
-                )} />
-                <Zap className="h-3 w-3 text-muted-foreground opacity-50" />
+                <div className={`p-2 rounded-lg ${stat.bg}`}>
+                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-              <p className={cn(
-                "text-xl font-bold",
-                stat.color === "blue" && "text-blue-600 dark:text-blue-400",
-                stat.color === "purple" && "text-purple-600 dark:text-purple-400",
-                stat.color === "emerald" && "text-emerald-600 dark:text-emerald-400",
-                stat.color === "cyan" && "text-cyan-600 dark:text-cyan-400",
-                stat.color === "amber" && "text-amber-600 dark:text-amber-400",
-                stat.color === "rose" && "text-rose-600 dark:text-rose-400"
-              )}>{stat.value}</p>
-            </GlassCard>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{stat.label}</p>
+            </div>
           ))}
         </div>
-      </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Driver ID & Route Progress */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Driver ID Card */}
-          <GlassCard className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-lg font-bold">Driver ID</h2>
-            </div>
-            <DriverIdCard 
-              driver={{
-                id: "DRV-2024-001",
-                name: "Mohamed KARKACHI",
-                email: user?.email || "mohamed.k@bustrack.com",
-                avatar: user?.avatar || "/placeholder.svg",
-                licenseNumber: "DL-MA-2024-12345",
-                busNumber: "BUS-101",
-                joinDate: "Jan 2024",
-                rating: 4.8,
-              }}
-            />
-          </GlassCard>
+        <div className="order-2 md:order-3 grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-[600px]">
+          {/* Left Column: Route & ID (3 cols) */}
+          <div className="xl:col-span-3 flex flex-col gap-6 h-full overflow-y-auto pr-2 custom-scrollbar">
+            {/* Driver ID Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-300">
+              <button
+                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                className="w-full p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-purple-500" />
+                  <h3 className="font-semibold text-slate-900 dark:text-white">Driver Profile</h3>
+                </div>
+                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isProfileExpanded ? 'rotate-180' : ''}`} />
+              </button>
 
-          {/* Route Progress */}
-          <GlassCard className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <Route className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-lg font-bold">Route Progress</h2>
-            </div>
-            
-            {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-muted-foreground">
-                  {currentRoute.stops.filter(s => s.status === 'completed').length}/{currentRoute.stops.length} stops
-                </span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {Math.round((currentRoute.stops.filter(s => s.status === 'completed').length / currentRoute.stops.length) * 100)}%
-                </span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
-                  style={{ width: `${(currentRoute.stops.filter(s => s.status === 'completed').length / currentRoute.stops.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Stops List */}
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-              {currentRoute.stops.map((stop, idx) => (
-                <div
-                  key={stop.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border-2 transition-all",
-                    stop.status === "completed" && "bg-emerald-500/10 border-emerald-500/30",
-                    stop.status === "current" && "bg-blue-500/10 border-blue-500/30 ring-2 ring-blue-500/20",
-                    stop.status === "upcoming" && "bg-muted/30 border-border"
-                  )}
-                >
-                  <div className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
-                    stop.status === "completed" && "bg-emerald-500 text-white",
-                    stop.status === "current" && "bg-blue-500 text-white animate-pulse",
-                    stop.status === "upcoming" && "bg-muted text-muted-foreground"
-                  )}>
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{stop.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {stop.status === "completed" && `Departed ${stop.time}`}
-                      {stop.status === "current" && (
-                        <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                          Arriving in {stop.eta} min
-                        </span>
-                      )}
-                      {stop.status === "upcoming" && `Scheduled ${stop.time}`}
-                    </p>
-                  </div>
-                  <div>
-                    {stop.status === "completed" && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
-                    {stop.status === "current" && <Clock className="h-5 w-5 text-blue-500 animate-pulse" />}
+              <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isProfileExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                <div className="overflow-hidden">
+                  <div className="p-4">
+                    <DriverIdCard
+                      driver={{
+                        id: "DRV-2024-001",
+                        name: user?.name || "Mohamed KARKACHI",
+                        email: user?.email || "mohamed.k@bustrack.com",
+                        avatar: user?.avatar || "/placeholder.svg",
+                        licenseNumber: "DL-MA-2024-12345",
+                        busNumber: currentRoute.busNumber,
+                        joinDate: "Jan 2024",
+                        rating: stats.rating,
+                      }}
+                    />
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </GlassCard>
-        </div>
 
-        {/* Right Column - Map & Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Live Map */}
-          <GlassCard className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <MapPin className="h-4 w-4 text-white" />
+            {/* Current Route Timeline */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex-1">
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Route className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold text-slate-900 dark:text-white">Route Progress</h3>
                 </div>
-                <h2 className="text-lg font-bold">Live Navigation</h2>
+                <span className="text-xs font-medium px-2 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
+                  {Math.round(progress)}% Complete
+                </span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30">
-                <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-xs font-bold text-red-600 dark:text-red-400">LIVE</span>
+
+              <div className="p-4">
+                <div className="mb-6">
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-1">{currentRoute.name}</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{currentRoute.busNumber}</p>
+                  <div className="mt-3 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-0">
+                  {currentRoute.stops.map((stop, index) => {
+                    const isCompleted = stop.status === "completed"
+                    const isActive = stop.status === "active"
+                    const isLast = index === currentRoute.stops.length - 1
+
+                    return (
+                      <div key={index} className="relative pl-8 pb-8 last:pb-0">
+                        {/* Timeline Line */}
+                        {!isLast && (
+                          <div className={`absolute left-[11px] top-3 bottom-0 w-0.5 ${isCompleted ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
+                            }`} />
+                        )}
+
+                        {/* Timeline Dot */}
+                        <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-white dark:bg-slate-900 ${isActive
+                          ? 'border-blue-500 text-blue-500 shadow-lg shadow-blue-500/20 scale-110'
+                          : isCompleted
+                            ? 'border-blue-500 bg-blue-500 text-white'
+                            : 'border-slate-300 dark:border-slate-600 text-slate-300'
+                          }`}>
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          ) : isActive ? (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                          ) : (
+                            <div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className={`transition-all ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <h5 className={`font-medium text-sm ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'
+                              }`}>
+                              {stop.name}
+                            </h5>
+                            {isActive && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-full uppercase tracking-wide">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {isActive ? `Arriving in ${stop.eta} min` : stop.time}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
-            
-            <div className="h-[400px] md:h-[500px] rounded-xl overflow-hidden border-2 border-border mb-4">
-              <BusMap height="100%" showControls={true} driverMode={true} />
-            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:shadow-lg hover:scale-105 active:scale-95 transition-all">
-                <Navigation className="h-5 w-5" />
-                Navigate
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-lg hover:scale-105 active:scale-95 transition-all">
-                <Phone className="h-5 w-5" />
-                Contact
-              </button>
+          {/* Middle Column: Map (6 cols) */}
+          <div className="xl:col-span-6 flex flex-col h-[600px]">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 h-full flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold text-slate-900 dark:text-white">Live Navigation</h3>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1">
+                    <Navigation className="w-3 h-3" /> Start
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 relative bg-slate-100 dark:bg-slate-800">
+                <BusMap height="100%" showControls={true} driverMode={true} />
+              </div>
             </div>
-          </GlassCard>
+          </div>
 
-          {/* Quick Actions & Alerts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Right Column: Actions & Alerts (3 cols) */}
+          <div className="xl:col-span-3 flex flex-col gap-6">
             {/* Quick Actions */}
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <Zap className="h-4 w-4 text-white" />
-                </div>
-                <h2 className="text-lg font-bold">Quick Actions</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <h3 className="font-semibold text-slate-900 dark:text-white">Quick Actions</h3>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="p-4 grid grid-cols-2 gap-3">
                 {[
-                  { label: "Report", icon: AlertCircle, color: "red" },
-                  { label: "Call", icon: Phone, color: "purple" },
-                  { label: "Complete", icon: CheckCircle2, color: "emerald" },
-                  { label: "Messages", icon: MessageSquare, color: "cyan" },
+                  { label: "Report Issue", icon: AlertCircle, color: "text-red-500", bg: "bg-red-50 dark:bg-red-500/10", border: "border-red-100 dark:border-red-500/20" },
+                  { label: "Contact Ops", icon: Phone, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-500/10", border: "border-purple-100 dark:border-purple-500/20" },
+                  { label: "End Trip", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-100 dark:border-emerald-500/20" },
+                  { label: "Messages", icon: MessageSquare, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10", border: "border-blue-100 dark:border-blue-500/20" },
                 ].map((action, idx) => (
                   <button
                     key={idx}
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-border transition-all hover:scale-105 active:scale-95",
-                      action.color === "red" && "hover:border-red-500/50 hover:bg-red-500/10",
-                      action.color === "purple" && "hover:border-purple-500/50 hover:bg-purple-500/10",
-                      action.color === "emerald" && "hover:border-emerald-500/50 hover:bg-emerald-500/10",
-                      action.color === "cyan" && "hover:border-cyan-500/50 hover:bg-cyan-500/10"
-                    )}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border ${action.border} ${action.bg} hover:brightness-95 transition-all`}
                   >
-                    <div className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center",
-                      action.color === "red" && "bg-gradient-to-br from-red-500 to-red-600",
-                      action.color === "purple" && "bg-gradient-to-br from-purple-500 to-purple-600",
-                      action.color === "emerald" && "bg-gradient-to-br from-emerald-500 to-emerald-600",
-                      action.color === "cyan" && "bg-gradient-to-br from-cyan-500 to-cyan-600"
-                    )}>
-                      <action.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-xs font-semibold">{action.label}</span>
+                    <action.icon className={`w-6 h-6 ${action.color} mb-2`} />
+                    <span className={`text-xs font-medium ${action.color}`}>{action.label}</span>
                   </button>
                 ))}
               </div>
-            </GlassCard>
+            </div>
 
             {/* Alerts */}
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                  <Bell className="h-4 w-4 text-white" />
-                </div>
-                <h2 className="text-lg font-bold">Alerts</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-red-500" />
+                <h3 className="font-semibold text-slate-900 dark:text-white">Recent Alerts</h3>
               </div>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+              <div className="p-4 space-y-3">
                 {alerts.map((alert) => (
                   <div
                     key={alert.id}
-                    className={cn(
-                      "p-3 rounded-lg border-2 transition-all hover:scale-[1.02]",
-                      alert.type === "warning" && "bg-amber-500/10 border-amber-500/30",
-                      alert.type === "info" && "bg-blue-500/10 border-blue-500/30"
-                    )}
+                    className={`p-3 rounded-xl border ${alert.type === "warning"
+                      ? "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20"
+                      : "bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20"
+                      }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className={cn(
-                        "h-4 w-4 mt-0.5 shrink-0",
-                        alert.type === "warning" && "text-amber-500",
-                        alert.type === "info" && "text-blue-500"
-                      )} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold">{alert.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{alert.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {alert.time}
+                    <div className="flex items-start gap-3">
+                      <div className={`p-1.5 rounded-full ${alert.type === "warning" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600" : "bg-blue-100 dark:bg-blue-500/20 text-blue-600"
+                        }`}>
+                        <AlertCircle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{alert.title}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{alert.message}</p>
+                        <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {alert.time}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </GlassCard>
+            </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

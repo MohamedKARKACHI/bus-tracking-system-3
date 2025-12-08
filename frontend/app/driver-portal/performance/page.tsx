@@ -30,7 +30,7 @@ export default function PerformancePage() {
         { label: "Safety Score", value: "98%", change: "+1%", trend: "up", icon: Award, color: "rose" },
       ]
       setStats(statsData)
-      
+
       // Fetch achievements with more data
       const achievementsData = [
         { id: 1, title: "Perfect Week", description: "100% on-time performance for 7 consecutive days", date: "Achieved 2 days ago", icon: Trophy, color: "emerald", completed: true },
@@ -57,7 +57,7 @@ export default function PerformancePage() {
   return (
     <main
       className={cn(
-        "flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/20",
+        "flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-48 transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/20",
         sidebarExpanded ? "lg:ml-0" : "lg:ml-0",
       )}
     >
@@ -96,7 +96,7 @@ export default function PerformancePage() {
                   {stat.change}
                 </div>
               </div>
-              <p className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent mb-1">{ stat.value}</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent mb-1">{stat.value}</p>
               <p className="text-[10px] sm:text-xs text-muted-foreground font-medium leading-tight">{stat.label}</p>
             </GlassCard>
           )
@@ -142,7 +142,7 @@ export default function PerformancePage() {
                           <span className="text-xs font-bold text-foreground">{achievement.progress}%</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
                             style={{ width: `${achievement.progress}%` }}
                           />

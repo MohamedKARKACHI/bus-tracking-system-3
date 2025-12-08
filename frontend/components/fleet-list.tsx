@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Bus, Wrench, Zap, Calendar, Loader2 } from "lucide-react"
 import { GlassCard } from "./ui/glass-card"
 import type { Bus as BusType } from "@/types"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export function FleetList() {
   const [fleet, setFleet] = useState<BusType[]>([])
@@ -17,12 +18,7 @@ export function FleetList() {
   const fetchFleet = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/buses', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchWithAuth('/api/buses')
 
       if (!response.ok) {
         throw new Error('Failed to fetch fleet data')
@@ -54,7 +50,7 @@ export function FleetList() {
         <div className="text-center text-red-500">
           <p className="font-semibold">Error loading fleet data</p>
           <p className="text-sm mt-2">{error}</p>
-          <button 
+          <button
             onClick={fetchFleet}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
           >
@@ -96,9 +92,8 @@ export function FleetList() {
                 <td className="p-4 text-sm text-muted-foreground">{bus.year}</td>
                 <td className="p-4">
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      bus.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                    }`}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${bus.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                      }`}
                   >
                     {bus.status === "active" ? <Zap className="h-3 w-3" /> : <Wrench className="h-3 w-3" />}
                     {bus.status}

@@ -23,7 +23,17 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Routes
+import { authenticateToken } from './middleware/auth.middleware'
+
+// Public Routes
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
 app.use('/api/auth', authRoutes)
+
+// Protected Routes
+app.use('/api', authenticateToken) // Apply auth middleware to all remaining /api routes
+
 app.use('/api/buses', busRoutes)
 app.use('/api/routes', routeRoutes)
 app.use('/api/schedules', scheduleRoutes)
@@ -33,15 +43,12 @@ app.use('/api/gps', gpsRoutes)
 app.use('/api/tickets', ticketRoutes)
 app.use('/api/bookings', bookingRoutes)
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
+
 
 // Initialize database and Socket.IO
 connectDatabase().then(() => {
   initializeSocketServer(server)
-  
+
   server.listen(PORT, () => {
     console.log(`🚀 Backend server running on http://localhost:${PORT}`)
     console.log(`📡 Socket.IO enabled for real-time tracking`)
