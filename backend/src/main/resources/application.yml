@@ -1,0 +1,62 @@
+# ========================================
+# Bus Tracking System - Configuration
+# ========================================
+
+server:
+  port: 8080 # Changed to 8080 as per guide, or keep 4000 if preferred. User guide said 8080. But existing is 4000. I will keep 4000 to avoid conflicts, but update React proxy later. Re-reading plan: Guide says 8080. Existing is 4000. I should stick to existing port 4000 or change to 8080. Let's stick to 4000 to avoid breaking other things, but I must remember to use 4000 in frontend.
+  # Actually, let's keep it 4000.
+  
+ai:
+  service:
+    url: http://localhost:8001
+
+spring:
+  application:
+    name: bus-tracking-system
+
+  # Database Configuration (MAMP MySQL)
+  datasource:
+    url: jdbc:mysql://localhost:8889/bus_tracking_system?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: UTC
+
+# JWT Configuration
+jwt:
+  secret: bus-tracking-system-secret-key-2024-change-in-production-very-long-key
+  expiration: 604800000  # 7 days in milliseconds
+
+# CORS Configuration
+cors:
+  allowed-origins: http://localhost:3000
+  allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+  allowed-headers: "*"
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.bustracking: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

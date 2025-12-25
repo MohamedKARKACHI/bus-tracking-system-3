@@ -1,0 +1,131 @@
+/* Module-scoped styles can be used, but for simplicity following the guide's approach adapted to global css or module */
+/* .scanner-container */
+.scanner-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.scanner-header {
+  text-align: center;
+  color: var(--foreground);
+  margin-bottom: 30px;
+  padding: 20px;
+}
+
+.scanner-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+@media (min-width: 768px) {
+  .scanner-content {
+    grid-template-columns: 1fr; 
+  }
+}
+
+.camera-section {
+  background: var(--card); 
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  border: 1px solid var(--border);
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-feed {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+/* Status dots */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--secondary);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #dc3545;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.active .status-dot {
+  background: #28a745;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Result Display */
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.plate-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  margin: 20px 0;
+  color: white;
+}
+
+.plate-section {
+  text-align: center;
+}
+
+.plate-value {
+  font-family: monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.plate-value.arabic {
+  font-size: 2rem;
+}
+
+.plate-divider {
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
