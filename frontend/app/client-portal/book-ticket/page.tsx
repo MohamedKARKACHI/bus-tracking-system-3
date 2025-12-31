@@ -1,698 +1,309 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { MapPin, CreditCard, ArrowRight, Check, Loader2, Bus, Clock, Users, ChevronRight, Wifi } from "lucide-react"
-import { GlassCard } from "@/components/ui/glass-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { BusMap } from "@/components/bus-map"
+import { useState } from "react"
+import { PremiumCard } from "@/components/premium/card"
+import {
+  Search, MapPin, Calendar, Users, ArrowRight, Bus,
+  CreditCard, Check, ShieldCheck, Clock, Armchair, ChevronLeft
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
-// Moroccan stations from map data
-const moroccanStations = [
-  // Marrakech
-  "Palmeraie", "Gueliz", "Massira", "Bab Doukkala", "Marjane Gueliz",
-  "Bab Agnaou", "Menara", "Place 16 Novembre", "Ben Youssef", "Majorelle Garden",
-  "Train Station", "Hivernage", "Koutoubia", "Jemaa el Fna", "Medina", "Gare ONCF Marrakech",
-  // Casablanca
-  "Casa Port", "Morocco Mall", "Hassan II Mosque", "Maarif", "Twin Center",
-  // Tangier
-  "Port Tanger Med", "Grand Socco", "Kasbah", "Ibn Batouta Mall"
-];
+import { useTickets } from "@/lib/ticket-context"
 
-interface Route {
-  id: string;
-  name: string;
-  route_number?: string;
-  start_location: string;
-  end_location: string;
-  price: number;
-  duration_minutes: number;
-  status?: string;
-  available_buses?: number;
-}
+// Mock 3D Bus Image (Using a high-quality placeholder that looks like the uploaded one)
+const BUS_IMAGE_URL = "https://cdn.dribbble.com/users/5661/screenshots/15456382/media/07df6c20845a70311756570535e5812b.png?resize=1600x1200&vertical=center" // Futuristic Bus Concept
 
-export default function BookTicketPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [popularRoutes, setPopularRoutes] = useState<Route[]>([])
-  const [filteredStations, setFilteredStations] = useState<string[]>([])
-  const [showFromSuggestions, setShowFromSuggestions] = useState(false)
-  const [showToSuggestions, setShowToSuggestions] = useState(false)
-  
-  const [booking, setBooking] = useState({
-    from: "",
-    to: "",
-    date: "",
-    passengers: 1,
-    route: "",
-    routeId: "",
-    busId: "",
-    seatNumbers: [] as number[],
-    totalPrice: 0,
-    passengerName: user?.name || "",
-    passengerEmail: user?.email || "",
-    passengerPhone: "",
-  })
+export default function PremiumBookTicket() {
+  const { addTicket } = useTickets()
+  const [step, setStep] = useState<'search' | 'select' | 'seat' | 'pay' | 'success'>('search')
+  const [searchParams, setSearchParams] = useState({ from: '', to: '', date: '', passengers: 1 })
+  const [selectedRoute, setSelectedRoute] = useState<any>(null)
+  const [selectedSeats, setSelectedSeats] = useState<number[]>([])
 
-  // Fetch routes from API
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('http://localhost:8080/api/routes')
-        if (response.ok) {
-          const data = await response.json()
-          setRoutes(data)
-        }
-      } catch (error) {
-        console.error('Error fetching routes:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    const fetchPopularRoutes = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/api/routes') // No popular endpoint, fallback to all
-        if (response.ok) {
-          const data = await response.json()
-          setPopularRoutes(data)
-        }
-      } catch (error) {
-        console.error('Error fetching popular routes:', error)
-      }
-    }
-
-    fetchRoutes()
-    fetchPopularRoutes()
-  }, [])
-
-  useEffect(() => {
-    if (booking.from || booking.to) {
-      const searchRoutes = async () => {
-        try {
-          const params = new URLSearchParams()
-          if (booking.from) params.append('from', booking.from)
-          if (booking.to) params.append('to', booking.to)
-          
-          const response = await fetch(`http://localhost:8080/api/routes?${params}`)
-          if (response.ok) {
-            const data = await response.json()
-            setRoutes(data)
-          }
-        } catch (error) {
-          console.error('Error searching routes:', error)
-        }
-      }
-      searchRoutes()
-    }
-  }, [booking.from, booking.to])
-
-  const filterStations = (input: string) => {
-    return moroccanStations.filter(station => 
-      station.toLowerCase().includes(input.toLowerCase())
-    ).slice(0, 5)
+  // Helper to go back
+  const goBack = () => {
+    if (step === 'select') setStep('search')
+    if (step === 'seat') setStep('select')
+    if (step === 'pay') setStep('seat')
   }
 
-  const handleFromChange = (value: string) => {
-    setBooking({ ...booking, from: value })
-    setFilteredStations(filterStations(value))
-    setShowFromSuggestions(true)
-  }
-
-  const handleToChange = (value: string) => {
-    setBooking({ ...booking, to: value })
-    setFilteredStations(filterStations(value))
-    setShowToSuggestions(true)
-  }
-
-  const selectStation = (station: string, type: 'from' | 'to') => {
-    if (type === 'from') {
-      setBooking({ ...booking, from: station })
-      setShowFromSuggestions(false)
-    } else {
-      setBooking({ ...booking, to: station })
-      setShowToSuggestions(false)
-    }
-  }
-
-  const availableSeats = Array.from({ length: 40 }, (_, i) => i + 1)
-
-  const handleSelectRoute = (route: Route) => {
-    setBooking({
-      ...booking,
-      route: `${route.start_location} → ${route.end_location}`,
-      routeId: route.id,
-      from: route.start_location,
-      to: route.end_location,
-      totalPrice: route.base_price * booking.passengers,
+  // Handle Payment Success
+  const handlePayment = () => {
+    // Add ticket to context
+    addTicket({
+      from: searchParams.from || 'Casablanca',
+      to: searchParams.to || 'Marrakech',
+      date: searchParams.date || 'Oct 25, 2025',
+      time: '08:00 AM',
+      seat: `${selectedSeats.length} Seats`,
+      price: (selectedSeats.length * 45) + 5
     })
-    setStep(2)
+    setStep('success')
   }
 
-  const handleSelectSeats = (seatNumber: number) => {
-    const newSeats = booking.seatNumbers.includes(seatNumber)
-      ? booking.seatNumbers.filter((s) => s !== seatNumber)
-      : [...booking.seatNumbers, seatNumber]
+  // Search Step
+  const SearchSection = () => (
+    <div className="max-w-xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="text-center mb-6">
+        <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">Premium Travel</span>
+        <h1 className="text-4xl font-extrabold pm-text-primary tracking-tight leading-tight">
+          Where will you <br /> <span className="text-emerald-500">explore</span> today?
+        </h1>
+      </div>
 
-    if (newSeats.length <= booking.passengers) {
-      setBooking({ ...booking, seatNumbers: newSeats })
-    }
-  }
+      <div className="bg-white dark:bg-[#1e293b] rounded-[2.5rem] p-2 shadow-2xl shadow-emerald-900/10 dark:shadow-black/20 border border-slate-100 dark:border-white/5">
 
-  const handlePayment = async () => {
-    // Simulate successful booking and show ticket/confirmation
-    setStep(5); // Add a new step for ticket display
-  }
+        {/* Segmented Control */}
+        <div className="flex p-1 bg-slate-100 dark:bg-black/20 rounded-[2rem] mb-6">
+          <button className="flex-1 py-3 rounded-[1.8rem] bg-white dark:bg-[#0f172a] text-emerald-600 dark:text-emerald-400 font-bold shadow-sm transition-all text-sm">One Way</button>
+          <button className="flex-1 py-3 rounded-[1.8rem] text-slate-400 font-bold hover:text-slate-600 transition-all text-sm">Round Trip</button>
+        </div>
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
-  }
+        <div className="space-y-4 px-4 pb-4">
+          {/* From/To Stacked */}
+          <div className="relative">
+            <div className="absolute left-6 top-5 bottom-5 w-[2px] bg-gradient-to-b from-emerald-500 to-blue-500/30 rounded-full">
+              <div className="absolute top-0 left-[-3px] w-2 h-2 rounded-full border-2 border-emerald-500 bg-white dark:bg-[#1e293b]" />
+              <div className="absolute bottom-0 left-[-3px] w-2 h-2 rounded-full border-2 border-blue-400 bg-white dark:bg-[#1e293b]" />
+            </div>
 
-  const formatPrice = (price: number | string) => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return `${numPrice.toFixed(0)} MAD`;
-  }
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 pl-12 transition-all hover:bg-slate-100 dark:hover:bg-black/30">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">From</label>
+                <input
+                  className="w-full bg-transparent font-bold text-lg pm-text-primary placeholder:text-slate-300 outline-none"
+                  placeholder="Select Departure"
+                  value={searchParams.from}
+                  onChange={e => setSearchParams({ ...searchParams, from: e.target.value })}
+                />
+              </div>
+              <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 pl-12 transition-all hover:bg-slate-100 dark:hover:bg-black/30">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">To</label>
+                <input
+                  className="w-full bg-transparent font-bold text-lg pm-text-primary placeholder:text-slate-300 outline-none"
+                  placeholder="Select Destination"
+                  value={searchParams.to}
+                  onChange={e => setSearchParams({ ...searchParams, to: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Swap Button */}
+            <button className="absolute right-8 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white dark:bg-[#0f172a] shadow-lg border border-slate-100 dark:border-white/10 flex items-center justify-center text-emerald-500 hover:rotate-180 transition-all duration-300">
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Date & Pax Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 transition-all hover:bg-slate-100 dark:hover:bg-black/30">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" /> Date</label>
+              <input type="date" className="w-full bg-transparent font-bold text-sm pm-text-primary outline-none" />
+            </div>
+            <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 transition-all hover:bg-slate-100 dark:hover:bg-black/30">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1 flex items-center gap-1"><Users className="w-3 h-3" /> Passengers</label>
+              <input type="number" defaultValue={1} min={1} className="w-full bg-transparent font-bold text-sm pm-text-primary outline-none" />
+            </div>
+          </div>
+
+          <button
+            onClick={() => setStep('select')}
+            className="w-full bg-[#0f172a] dark:bg-emerald-500 text-white font-bold py-5 rounded-[1.5rem] shadow-xl shadow-slate-900/20 dark:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+          >
+            Search Trip <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  // Route Selection (Flight Style)
+  const RouteList = () => (
+    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={goBack} className="w-10 h-10 rounded-full bg-white dark:bg-[#1e293b] flex items-center justify-center shadow-sm text-slate-400 hover:text-emerald-500 transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h2 className="text-xl font-bold pm-text-primary">Select Trip</h2>
+          <p className="text-xs text-slate-400">3 Routes Available</p>
+        </div>
+      </div>
+
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          onClick={() => { setSelectedRoute(i); setStep('seat'); }}
+          className="group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-lg shadow-slate-200/50 dark:shadow-black/20 cursor-pointer overflow-hidden border border-transparent hover:border-emerald-500 transition-all hover:scale-[1.02]"
+        >
+          {/* Airline Brand */}
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <Bus className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h4 className="font-bold pm-text-primary">Premium Liner</h4>
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">ID 8472</span>
+              </div>
+            </div>
+            <span className="text-lg font-bold text-emerald-500">45.00 MAD</span>
+          </div>
+
+          {/* Route Graph */}
+          <div className="flex items-center justify-between mb-6 relative">
+            <div className="text-left">
+              <p className="text-2xl font-bold pm-text-primary font-mono">08:00</p>
+              <p className="text-xs text-slate-400 font-bold uppercase">Casablanca</p>
+            </div>
+
+            {/* Flight Path Graphic */}
+            <div className="flex-1 px-8 relative flex items-center justify-center">
+              <div className="w-full h-[2px] bg-slate-200 dark:bg-slate-700 dashed-line relative">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-slate-300 bg-white" />
+                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-emerald-500 bg-white" />
+                <Bus className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors bg-white dark:bg-[#1e293b] px-1" />
+              </div>
+            </div>
+
+            <div className="text-right">
+              <p className="text-2xl font-bold pm-text-primary font-mono">12:30</p>
+              <p className="text-xs text-slate-400 font-bold uppercase">Marrakech</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
+            <div className="flex gap-4">
+              <span className="text-xs font-bold text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> 4h 30m</span>
+              <span className="text-xs font-bold text-slate-400 flex items-center gap-1"><Armchair className="w-3 h-3" /> 24 Seats</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  // 3D Seat Selection (Bus Interior)
+  const SeatMap = () => (
+    <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={goBack} className="w-10 h-10 rounded-full bg-white dark:bg-[#1e293b] flex items-center justify-center shadow-sm text-slate-400 hover:text-emerald-500 transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1">
+          <h2 className="text-xl font-bold pm-text-primary">Select Seats</h2>
+          <p className="text-xs text-slate-400">Lower Deck • Business Class</p>
+        </div>
+        <div className="flex gap-2 text-[10px] font-bold">
+          <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700" /> Avail</div>
+          <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500" /> Your</div>
+        </div>
+      </div>
+
+      {/* 3D Bus Container */}
+      <div className="relative bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#1e293b] dark:to-black rounded-[3rem] p-4 shadow-2xl border-4 border-white dark:border-slate-800 overflow-hidden">
+
+        {/* Cockpit Area */}
+        <div className="h-24 bg-gradient-to-b from-slate-200 to-transparent dark:from-white/5 rounded-t-[2.5rem] mb-4 flex justify-center pt-4 opacity-50">
+          <div className="w-16 h-2 bg-slate-300 rounded-full" />
+        </div>
+
+        {/* Seats Grid */}
+        <div className="grid grid-cols-4 gap-x-6 gap-y-4 px-6 pb-12 relative z-10">
+          {/* Aisle Marker */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] -ml-[1px] bg-slate-200 dark:bg-white/5 border-l border-dashed border-slate-300 dark:border-white/10" />
+
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={i} className={`relative group ${i % 2 === 1 ? 'mr-0' : 'mr-auto'} ${Math.floor(i / 2) % 2 === 0 ? 'ml-0' : 'ml-auto'}`} style={{ gridColumn: i % 4 < 2 ? 'span 1' : 'span 1' }}>
+              <button
+                onClick={() => {
+                  if (selectedSeats.includes(i)) setSelectedSeats(selectedSeats.filter(s => s !== i))
+                  else setSelectedSeats([...selectedSeats, i])
+                }}
+                className={cn(
+                  "w-12 h-14 rounded-2xl transition-all duration-300 relative shadow-md",
+                  selectedSeats.includes(i)
+                    ? "bg-emerald-500 text-white translate-y-[-4px] shadow-emerald-500/40"
+                    : "bg-white dark:bg-[#0f172a] text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-400"
+                )}
+              >
+                {/* 3D Seat Shape Styling */}
+                <div className="absolute top-1 left-1 right-1 h-8 rounded-xl bg-black/5 dark:bg-white/5" />
+                <span className="relative z-10 font-bold text-xs">{i + 1}{['A', 'B', 'C', 'D'][i % 4]}</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Floating Bottom Action */}
+      <div className="fixed bottom-24 lg:bottom-10 left-6 right-6 lg:left-auto lg:right-10 lg:w-[400px] bg-white dark:bg-[#1e293b] p-4 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 flex items-center justify-between pb-4 animate-in slide-in-from-bottom-20 z-50">
+        <div>
+          <p className="text-xs font-bold text-slate-400 uppercase">Total Price</p>
+          <p className="text-2xl font-bold pm-text-primary"><span className="text-emerald-500">{selectedSeats.length * 45} MAD</span></p>
+        </div>
+        <button
+          onClick={() => setStep('pay')}
+          disabled={selectedSeats.length === 0}
+          className="px-8 py-4 bg-[#0f172a] dark:bg-emerald-500 text-white font-bold rounded-[1.5rem] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all shadow-lg"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+
+  const PayScreen = () => (
+    <div className="max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pt-10">
+      <PremiumCard className="text-center py-12 px-8 shadow-2xl rounded-[3rem]">
+        <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 text-emerald-500 relative">
+          <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full animate-ping" />
+          <ShieldCheck className="w-10 h-10 relative z-10" />
+        </div>
+        <h2 className="text-3xl font-extrabold pm-text-primary mb-2">Checkout</h2>
+        <p className="pm-text-secondary mb-10">Secure payment via Stripe</p>
+
+        <div className="bg-slate-50 dark:bg-black/20 p-6 rounded-3xl mb-8 text-left">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-bold text-slate-400">Tickets ({selectedSeats.length})</span>
+            <span className="text-sm font-bold pm-text-primary">{selectedSeats.length * 45} MAD</span>
+          </div>
+          <div className="flex justify-between mb-4">
+            <span className="text-sm font-bold text-slate-400">Taxes</span>
+            <span className="text-sm font-bold pm-text-primary">5.00 MAD</span>
+          </div>
+          <div className="border-t border-slate-200 dark:border-white/10 pt-4 flex justify-between">
+            <span className="text-lg font-bold pm-text-primary">Total</span>
+            <span className="text-2xl font-bold text-emerald-500">{(selectedSeats.length * 45) + 5} MAD</span>
+          </div>
+        </div>
+
+        <button
+          onClick={handlePayment}
+          className="w-full bg-[#0f172a] dark:bg-emerald-500 text-white font-bold py-5 rounded-[1.5rem] hover:scale-[1.02] transition-all shadow-xl flex items-center justify-center gap-3"
+        >
+          <CreditCard className="w-5 h-5" /> Pay Now
+        </button>
+      </PremiumCard>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Where are you going?
-          </h1>
+    <div className="min-h-[80vh] flex flex-col justify-center pb-32">
+      {step === 'search' && <SearchSection />}
+      {step === 'select' && <RouteList />}
+      {step === 'seat' && <SeatMap />}
+      {step === 'pay' && <PayScreen />}
+      {step === 'success' && (
+        <div className="text-center animate-in zoom-in duration-500">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/30">
+            <Check className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 mb-4">You're All Set!</h1>
+          <p className="pm-text-secondary text-lg mb-12 max-w-md mx-auto">Your boarding pass is ready.</p>
+          <button onClick={() => setStep('search')} className="px-10 py-4 bg-slate-100 dark:bg-white/10 rounded-full font-bold pm-text-primary hover:bg-slate-200 dark:hover:bg-white/20 transition-colors shadow-lg">View Ticket</button>
         </div>
-        {/* ...rest of the component... */}
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              {/* From Input with Autocomplete */}
-              <div className="relative">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <MapPin className="w-4 h-4 text-cyan-500" />
-                  From
-                </label>
-                <Input
-                  placeholder="Enter departure location"
-                  value={booking.from}
-                  onChange={(e) => handleFromChange(e.target.value)}
-                  onFocus={() => setShowFromSuggestions(true)}
-                  className="py-6"
-                />
-                {showFromSuggestions && filteredStations.length > 0 && (
-                  <div className="absolute z-10 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                    {filteredStations.map((station) => (
-                      <button
-                        key={station}
-                        onClick={() => selectStation(station, 'from')}
-                        className="w-full px-4 py-3 text-left hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-cyan-500" />
-                          <span className="text-slate-900 dark:text-white">{station}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* To Input with Autocomplete */}
-              <div className="relative">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <MapPin className="w-4 h-4 text-blue-500" />
-                  To
-                </label>
-                <Input
-                  placeholder="Enter destination"
-                  value={booking.to}
-                  onChange={(e) => handleToChange(e.target.value)}
-                  onFocus={() => setShowToSuggestions(true)}
-                  className="py-6"
-                />
-                {showToSuggestions && filteredStations.length > 0 && (
-                  <div className="absolute z-10 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                    {filteredStations.map((station) => (
-                      <button
-                        key={station}
-                        onClick={() => selectStation(station, 'to')}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-blue-500" />
-                          <span className="text-slate-900 dark:text-white">{station}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                  Travel Date
-                </label>
-                <Input
-                  type="date"
-                  className="py-6"
-                  value={booking.date}
-                  onChange={(e) => setBooking({ ...booking, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                  Passengers
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={booking.passengers}
-                  onChange={(e) => setBooking({ ...booking, passengers: parseInt(e.target.value) || 1 })}
-                  className="py-6"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  className="w-full py-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-                  onClick={() => {
-                    setStep(2);
-                  }}
-                >
-                  Search Available Buses
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Popular Routes */}
-            {popularRoutes.length > 0 && !booking.from && !booking.to && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                  Popular Routes
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {popularRoutes.slice(0, 3).map((route) => (
-                    <button
-                      key={route.id}
-                      onClick={() => {
-                        setBooking({
-                          ...booking,
-                          from: route.start_location,
-                          to: route.end_location
-                        })
-                      }}
-                      className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-cyan-500 dark:hover:border-cyan-500 transition-colors text-sm"
-                    >
-                      {route.start_location} → {route.end_location}
-                    </button>
-                  ))}
-
-                </div>
-              </div>
-            )}
-
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all ${
-                    step >= s
-                      ? "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg"
-                      : "bg-slate-200 dark:bg-slate-800 text-slate-500"
-                  }`}
-                >
-                  {step > s ? <Check className="w-6 h-6" /> : s}
-                </div>
-                {s < 4 && (
-                  <div
-                    className={`w-16 md:w-24 h-1 rounded-full transition-all ${
-                      step > s ? "bg-gradient-to-r from-cyan-500 to-blue-600" : "bg-slate-200 dark:bg-slate-800"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center gap-8 md:gap-16">
-            <span
-              className={`text-xs md:text-sm font-medium ${step >= 1 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500"}`}
-            >
-              Route
-            </span>
-            <span
-              className={`text-xs md:text-sm font-medium ${step >= 2 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500"}`}
-            >
-              Seats
-            </span>
-            <span
-              className={`text-xs md:text-sm font-medium ${step >= 3 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500"}`}
-            >
-              Details
-            </span>
-            <span
-              className={`text-xs md:text-sm font-medium ${step >= 4 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500"}`}
-            >
-              Payment
-            </span>
-          </div>
-        </div>
-
-        {/* Step 1: Select Route */}
-        {step === 1 && (
-          <div className="space-y-4">
-            <GlassCard>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Bus className="text-cyan-500" />
-                Available Routes
-              </h2>
-              
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-                  <p className="text-slate-600 dark:text-slate-400">Loading available routes...</p>
-                </div>
-              ) : routes.length === 0 ? (
-                <div className="text-center py-12">
-                  <Bus className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-                  <p className="text-lg text-slate-600 dark:text-slate-400">
-                    {booking.from || booking.to 
-                      ? "No routes found for your search. Try different locations."
-                      : "Start searching for routes by entering your departure and destination above."}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {routes.map((route) => (
-                    <button
-                      key={route.id}
-                      onClick={() => handleSelectRoute(route)}
-                      className="p-6 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 bg-white dark:bg-slate-800 hover:shadow-xl transition-all text-left group"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-semibold mb-2">
-                            <MapPin className="w-4 h-4" />
-                            <span>{route.start_location}</span>
-                          </div>
-                          <div className="flex items-center gap-2 my-1">
-                            <ArrowRight className="w-4 h-4 text-slate-400" />
-                          </div>
-                          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold mb-3">
-                            <MapPin className="w-4 h-4" />
-                            <span>{route.end_location}</span>
-                          </div>
-                          <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {formatDuration(route.duration_minutes)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {route.available_buses} {route.available_buses === 1 ? 'bus' : 'buses'} available
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                            {formatPrice(route.base_price * (booking.passengers || 1))}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {formatPrice(route.base_price)} × {booking.passengers || 1}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
-                        <div className="flex gap-2">
-                          <Badge variant="outline" className="border-cyan-500 text-cyan-600 dark:text-cyan-400 text-xs">
-                            <Wifi className="w-3 h-3 mr-1" />
-                            WiFi
-                          </Badge>
-                          <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400 text-xs">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            GPS
-                          </Badge>
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-cyan-600 group-hover:translate-x-2 transition-transform" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </GlassCard>
-
-            {/* Route Preview Map */}
-            {booking.route && (
-              <GlassCard>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Route Preview</h2>
-                <BusMap 
-                  height="300px" 
-                  showControls={false}
-                  highlightBus={booking.busId ? `BUS-${booking.busId}` : null}
-                />
-              </GlassCard>
-            )}
-          </div>
-        )}
-
-        {/* Step 2: Select Seats */}
-        {step === 2 && (
-          <GlassCard>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Select Your Seats</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Choose {booking.passengers} seat{booking.passengers > 1 ? "s" : ""} for {booking.route}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-slate-600 dark:text-slate-400">Selected</p>
-                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                  {booking.seatNumbers.length}/{booking.passengers}
-                </p>
-              </div>
-            </div>
-
-            {/* Bus Layout */}
-            <div className="mb-6 p-6 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-              <div className="text-center mb-4">
-                <div className="inline-block px-4 py-2 bg-slate-700 text-white rounded-t-xl font-medium">Driver</div>
-              </div>
-              <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
-                {availableSeats.map((seat) => {
-                  const isSelected = booking.seatNumbers.includes(seat)
-                  const isOccupied = [5, 12, 18, 23, 31].includes(seat) // Mock occupied seats
-
-                  return (
-                    <button
-                      key={seat}
-                      onClick={() => !isOccupied && handleSelectSeats(seat)}
-                      disabled={isOccupied}
-                      className={`aspect-square rounded-xl font-bold text-sm transition-all ${
-                        isOccupied
-                          ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                          : isSelected
-                            ? "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg scale-110"
-                            : "bg-white dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-cyan-100 dark:hover:bg-cyan-900 hover:scale-105"
-                      }`}
-                    >
-                      {seat}
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="flex items-center justify-center gap-6 mt-6 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-white dark:bg-slate-600 rounded-lg border-2 border-slate-300 dark:border-slate-500"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Selected</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Occupied</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <Button onClick={() => setStep(1)} variant="outline" className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={booking.seatNumbers.length !== booking.passengers}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-              >
-                Continue
-              </Button>
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Step 3: Enter Details */}
-        {step === 3 && (
-          <GlassCard>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Passenger Details</h2>
-            <div className="space-y-4 mb-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Full Name</label>
-                  <Input placeholder="John Doe" className="py-6" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Email</label>
-                  <Input type="email" placeholder="john@example.com" defaultValue={user?.email} className="py-6" />
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                    Phone Number
-                  </label>
-                  <Input placeholder="+1 (555) 123-4567" className="py-6" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                    Travel Date
-                  </label>
-                  <Input
-                    type="date"
-                    className="py-6"
-                    value={booking.date}
-                    onChange={(e) => setBooking({ ...booking, date: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 rounded-2xl border border-cyan-200 dark:border-cyan-800 mb-6">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">Booking Summary</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Route:</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{booking.route}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">From - To:</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">
-                    {booking.from} → {booking.to}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Seats:</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{booking.seatNumbers.join(", ")}</span>
-                </div>
-                <div className="flex justify-between pt-4 border-t border-cyan-300 dark:border-cyan-700">
-                  <span className="text-slate-600 dark:text-slate-400">Total Price:</span>
-                  <span className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                    ${booking.totalPrice.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <Button onClick={() => setStep(2)} variant="outline" className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep(4)}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-              >
-                Continue to Payment
-              </Button>
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Step 4: Payment */}
-        {step === 4 && (
-          <GlassCard>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Payment Details</h2>
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Card Number</label>
-                <Input placeholder="1234 5678 9012 3456" className="py-6" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                    Expiry Date
-                  </label>
-                  <Input placeholder="MM/YY" className="py-6" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">CVV</label>
-                  <Input placeholder="123" className="py-6" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                  Cardholder Name
-                </label>
-                <Input placeholder="JOHN DOE" className="py-6" />
-              </div>
-            </div>
-
-            <div className="p-6 bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-950/30 dark:to-cyan-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total Amount</p>
-                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                    ${booking.totalPrice.toFixed(2)}
-                  </p>
-                </div>
-                <CreditCard className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <Button onClick={() => setStep(3)} variant="outline" className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={handlePayment}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white shadow-lg"
-              >
-                Complete Payment
-              </Button>
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Step 5: Ticket Confirmation */}
-        {step === 5 && (
-          <GlassCard className="mt-8 text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-4">Booking Confirmed!</h2>
-            <p className="mb-2">Thank you for your booking, <b>{booking.passengerName || 'Passenger'}</b>.</p>
-            <div className="my-4 p-4 rounded-lg border bg-slate-50 dark:bg-slate-800 inline-block text-left">
-              <div><b>From:</b> {booking.from}</div>
-              <div><b>To:</b> {booking.to}</div>
-              <div><b>Date:</b> {booking.date}</div>
-              <div><b>Passengers:</b> {booking.passengers}</div>
-              <div><b>Seats:</b> {booking.seatNumbers.length > 0 ? booking.seatNumbers.join(', ') : 'Auto-assigned'}</div>
-              <div><b>Total Paid:</b> ${booking.totalPrice || '0.00'}</div>
-            </div>
-            <p className="mt-4">A confirmation email will be sent to <b>{booking.passengerEmail || 'your email'}</b>.</p>
-            <Button className="mt-6" onClick={() => setStep(1)}>Book Another Ticket</Button>
-          </GlassCard>
-        )}
-      </div>
+      )}
     </div>
   )
 }

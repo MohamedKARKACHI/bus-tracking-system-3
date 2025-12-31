@@ -14,16 +14,18 @@ export function middleware(request: NextRequest) {
     'geolocation=(self), microphone=(), camera=()'
   )
 
-  // Content Security Policy
+  // Content Security Policy - Updated for Mapbox GL JS
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com",
-      "img-src 'self' data: https: http://localhost:*",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+      "worker-src 'self' blob:",
+      "child-src 'self' blob:",
+      "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://api.mapbox.com",
+      "img-src 'self' data: blob: https: http://localhost:* https://*.mapbox.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' ws: wss: http://localhost:* https:",
+      "connect-src 'self' ws: wss: http://localhost:* https: https://*.mapbox.com https://api.mapbox.com https://events.mapbox.com",
       "frame-ancestors 'none'"
     ].join('; ')
   )

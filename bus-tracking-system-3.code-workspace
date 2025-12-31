@@ -4,10 +4,11 @@
 			"path": "."
 		},
 		{
-			"path": "../../Documents/pfa2 (1)"
+			"path": "../Arabic License plates.v1i.yolov8"
 		}
 	],
 	"settings": {
-		"java.compile.nullAnalysis.mode": "automatic"
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "interactive"
 	}
 }

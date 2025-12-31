@@ -13,6 +13,8 @@ echo ""
 echo -e "${YELLOW}🧹 Cleaning up existing processes...${NC}"
 pkill -f "next dev" || true
 pkill -f "uvicorn" || true
+pkill -f "spring-boot" || true
+pkill -f "bus-tracking-system" || true
 sleep 1
 
 # Check if backends are already running
@@ -40,7 +42,7 @@ echo ""
 echo -e "${YELLOW}▶️  Starting Backend (Spring Boot) on port 4000...${NC}"
 # Use absolute path or cd ..
 cd ..
-./mvnw -f backend/pom.xml spring-boot:run &
+./mvnw -f backend/pom.xml spring-boot:run -Dspring-boot.run.arguments=--server.port=4000 &
 BACKEND_PID=$!
 sleep 20 # Wait for Spring Boot to initialize
 
