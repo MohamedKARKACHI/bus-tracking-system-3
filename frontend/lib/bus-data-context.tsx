@@ -24,22 +24,51 @@ interface BusContextType {
   setCurrentBusId: (id: string) => void
   isConnected: boolean
   getBusById: (id: string) => BusData | undefined
+  // Search State
+  userInfo: { name: string; role: string } | null
+  globalSearchQuery: string
+  setGlobalSearchQuery: (query: string) => void
+  globalSearchResults: any[]
+  searchDate: Date | undefined
+  setSearchDate: (date: Date | undefined) => void
+  triggerRouteCalculation: (destination: any) => void
 }
 
 const BusContext = createContext<BusContextType | undefined>(undefined)
 
+// Simple event bus for route triggering
+export const routeEventBus = {
+  listeners: [] as Function[],
+  subscribe(callback: Function) {
+    this.listeners.push(callback)
+    return () => {
+      this.listeners = this.listeners.filter(cb => cb !== callback)
+    }
+  },
+  emit(destination: any) {
+    this.listeners.forEach(cb => cb(destination))
+  }
+}
+
 export function BusDataProvider({ children }: { children: ReactNode }) {
   const [buses, setBuses] = useState<BusData[]>([])
   const [currentBusId, setCurrentBusId] = useState<string>("BUS-1")
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("")
+  const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([])
+  const [searchDate, setSearchDate] = useState<Date | undefined>(undefined)
+
+  const triggerRouteCalculation = (destination: any) => {
+    routeEventBus.emit(destination)
+  }
 
   const { isConnected } = useGPSTracking((gpsData) => {
     if (!gpsData || !Array.isArray(gpsData)) return
-    
+
     const transformedBuses: BusData[] = gpsData.map((data: any) => {
       const busId = data.bus?.id || data.busId || data.id
       const routeId = data.bus?.routeId || data.routeId || ((busId - 1) % 4) + 1
       const route = getRouteById(routeId)
-      
+
       return {
         id: `BUS-${busId}`,
         busId,
@@ -54,7 +83,7 @@ export function BusDataProvider({ children }: { children: ReactNode }) {
         lastUpdate: new Date()
       }
     })
-    
+
     setBuses(transformedBuses)
   })
 
@@ -68,7 +97,14 @@ export function BusDataProvider({ children }: { children: ReactNode }) {
       currentBus,
       setCurrentBusId,
       isConnected,
-      getBusById
+      getBusById,
+      userInfo: { name: "Admin User", role: "Administrator" },
+      globalSearchQuery,
+      setGlobalSearchQuery,
+      globalSearchResults,
+      searchDate,
+      setSearchDate,
+      triggerRouteCalculation
     }}>
       {children}
     </BusContext.Provider>

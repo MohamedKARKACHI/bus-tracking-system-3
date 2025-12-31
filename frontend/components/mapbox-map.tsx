@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import dynamic from "next/dynamic"
+import { useTheme } from "next-themes"
 import {
   Bus,
   MapPin,
@@ -19,23 +21,22 @@ import {
   Minimize,
   Navigation,
   Locate,
+  Footprints,
+  Layers
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { PlaceResult, TripMetadata, BusData } from "./map-types"
+import { ScheduleModal } from "@/components/schedule-modal"
+import { routeEventBus } from "@/lib/bus-data-context"
+import { toast } from "sonner"
+
+const BottomSheetWrapper = ({ children, isFullscreen }: { children: React.ReactNode, isFullscreen: boolean }) => {
+  if (typeof document === 'undefined') return null
+  if (isFullscreen) return <>{children}</>
+  return createPortal(children, document.body)
+}
 
 const MAPBOX_TOKEN = "pk.eyJ1Ijoic2ltbzMzIiwiYSI6ImNtaWRwcnc2czA3bDYybXNiaGsxc2kxN2oifQ.vIT5iMLrm07zHJkrSqftHA"
-
-interface BusData {
-  id: string
-  name: string
-  route: string
-  routeColor: string
-  coordinates: [number, number]
-  status: "moving" | "stopped" | "in-station"
-  speed: number
-  heading: number
-  passengers: number
-  nextStop: string
-  eta: string
-}
 
 interface StationData {
   id: string
@@ -56,637 +57,175 @@ interface MapboxMapProps {
   zoom?: number
 }
 
+// Stations Data
 const stations: StationData[] = [
   // Marrakech stations
-  {
-    id: "s1",
-    name: "Palmeraie",
-    coordinates: [31.6695, -7.9811],
-    type: "terminal",
-    status: "active",
-    routes: ["Route 1"],
-    labelColor: "orange",
-  },
-  {
-    id: "s2",
-    name: "Gueliz",
-    coordinates: [31.65, -7.99],
-    type: "major",
-    status: "active",
-    routes: ["Route 1", "Route 2"],
-    labelColor: "green",
-  },
-  {
-    id: "s3",
-    name: "Massira",
-    coordinates: [31.645, -8.01],
-    type: "regular",
-    status: "active",
-    routes: ["Route 3"],
-    labelColor: "green",
-  },
-  {
-    id: "s4",
-    name: "Bab Doukkala",
-    coordinates: [31.638, -8.022],
-    type: "major",
-    status: "locked",
-    routes: ["Route 1"],
-    labelColor: "blue",
-  },
-  {
-    id: "s5",
-    name: "Marjane Gueliz",
-    coordinates: [31.634, -8.015],
-    type: "regular",
-    status: "active",
-    routes: ["Route 2"],
-    labelColor: "blue",
-  },
-  {
-    id: "s6",
-    name: "Bab Agnaou",
-    coordinates: [31.64, -8.0],
-    type: "major",
-    status: "busy",
-    routes: ["Route 1", "Route 3"],
-    labelColor: "orange",
-  },
-  {
-    id: "s7",
-    name: "Menara",
-    coordinates: [31.635, -7.99],
-    type: "regular",
-    status: "active",
-    routes: ["Route 2"],
-    labelColor: "orange",
-  },
-  {
-    id: "s8",
-    name: "Place 16 Novembre",
-    coordinates: [31.63, -8.01],
-    type: "regular",
-    status: "active",
-    routes: ["Route 2"],
-    labelColor: "blue",
-  },
-  {
-    id: "s9",
-    name: "Ben Youssef",
-    coordinates: [31.637, -7.982],
-    type: "major",
-    status: "active",
-    routes: ["Route 1", "Route 2"],
-    labelColor: "green",
-  },
-  {
-    id: "s10",
-    name: "Majorelle Garden",
-    coordinates: [31.632, -7.988],
-    type: "regular",
-    status: "locked",
-    routes: ["Route 3"],
-    labelColor: "purple",
-  },
-  {
-    id: "s11",
-    name: "Train Station",
-    coordinates: [31.628, -7.98],
-    type: "terminal",
-    status: "active",
-    routes: ["Route 1"],
-    labelColor: "purple",
-  },
-  {
-    id: "s12",
-    name: "Hivernage",
-    coordinates: [31.624, -8.008],
-    type: "major",
-    status: "active",
-    routes: ["Route 2"],
-    labelColor: "orange",
-  },
-  {
-    id: "s13",
-    name: "Koutoubia",
-    coordinates: [31.628, -7.993],
-    type: "major",
-    status: "active",
-    routes: ["Route 1", "Route 3"],
-    labelColor: "purple",
-  },
-  {
-    id: "s14",
-    name: "Jemaa el Fna",
-    coordinates: [31.6258, -7.9891],
-    type: "terminal",
-    status: "busy",
-    routes: ["Route 1", "Route 2", "Route 3"],
-    labelColor: "green",
-  },
-  {
-    id: "s15",
-    name: "Medina",
-    coordinates: [31.618, -8.018],
-    type: "major",
-    status: "active",
-    routes: ["Route 2"],
-    labelColor: "blue",
-  },
-  {
-    id: "s16",
-    name: "Gare ONCF Marrakech",
-    coordinates: [31.622, -8.002],
-    type: "terminal",
-    status: "active",
-    routes: ["Route 1", "Route 2", "Route 3"],
-    labelColor: "purple",
-  },
+  { id: "s1", name: "Palmeraie", coordinates: [31.6695, -7.9811], type: "terminal", status: "active", routes: ["Route 1"], labelColor: "orange" },
+  { id: "s2", name: "Gueliz", coordinates: [31.65, -7.99], type: "major", status: "active", routes: ["Route 1", "Route 2"], labelColor: "green" },
+  { id: "s3", name: "Massira", coordinates: [31.645, -8.01], type: "regular", status: "active", routes: ["Route 3"], labelColor: "green" },
+  { id: "s4", name: "Bab Doukkala", coordinates: [31.638, -8.022], type: "major", status: "locked", routes: ["Route 1"], labelColor: "blue" },
+  { id: "s5", name: "Marjane Gueliz", coordinates: [31.634, -8.015], type: "regular", status: "active", routes: ["Route 2"], labelColor: "blue" },
+  { id: "s6", name: "Bab Agnaou", coordinates: [31.64, -8.0], type: "major", status: "busy", routes: ["Route 1", "Route 3"], labelColor: "orange" },
+  { id: "s7", name: "Menara", coordinates: [31.635, -7.99], type: "regular", status: "active", routes: ["Route 2"], labelColor: "orange" },
+  { id: "s8", name: "Place 16 Novembre", coordinates: [31.63, -8.01], type: "regular", status: "active", routes: ["Route 2"], labelColor: "blue" },
+  { id: "s9", name: "Ben Youssef", coordinates: [31.637, -7.982], type: "major", status: "active", routes: ["Route 1", "Route 2"], labelColor: "green" },
+  { id: "s10", name: "Majorelle Garden", coordinates: [31.632, -7.988], type: "regular", status: "locked", routes: ["Route 3"], labelColor: "purple" },
+  { id: "s11", name: "Train Station", coordinates: [31.628, -7.98], type: "terminal", status: "active", routes: ["Route 1"], labelColor: "purple" },
+  { id: "s12", name: "Hivernage", coordinates: [31.624, -8.008], type: "major", status: "active", routes: ["Route 2"], labelColor: "orange" },
+  { id: "s13", name: "Koutoubia", coordinates: [31.628, -7.993], type: "major", status: "active", routes: ["Route 1", "Route 3"], labelColor: "purple" },
+  { id: "s14", name: "Jemaa el Fna", coordinates: [31.6258, -7.9891], type: "terminal", status: "busy", routes: ["Route 1", "Route 2", "Route 3"], labelColor: "green" },
+  { id: "s15", name: "Medina", coordinates: [31.618, -8.018], type: "major", status: "active", routes: ["Route 2"], labelColor: "blue" },
+  { id: "s16", name: "Gare ONCF Marrakech", coordinates: [31.622, -8.002], type: "terminal", status: "active", routes: ["Route 1", "Route 2", "Route 3"], labelColor: "purple" },
   // Casablanca stations
-  {
-    id: "cs1",
-    name: "Casa Port",
-    coordinates: [33.5951, -7.6187],
-    type: "terminal",
-    status: "active",
-    routes: ["Casa Line 1"],
-    labelColor: "blue",
-  },
-  {
-    id: "cs2",
-    name: "Morocco Mall",
-    coordinates: [33.5342, -7.6698],
-    type: "major",
-    status: "active",
-    routes: ["Casa Line 1", "Casa Line 2"],
-    labelColor: "green",
-  },
-  {
-    id: "cs3",
-    name: "Hassan II Mosque",
-    coordinates: [33.6084, -7.6325],
-    type: "major",
-    status: "busy",
-    routes: ["Casa Line 1"],
-    labelColor: "orange",
-  },
-  {
-    id: "cs4",
-    name: "Maarif",
-    coordinates: [33.5731, -7.6289],
-    type: "major",
-    status: "active",
-    routes: ["Casa Line 2"],
-    labelColor: "purple",
-  },
-  {
-    id: "cs5",
-    name: "Twin Center",
-    coordinates: [33.5892, -7.6264],
-    type: "regular",
-    status: "active",
-    routes: ["Casa Line 2"],
-    labelColor: "blue",
-  },
+  { id: "cs1", name: "Casa Port", coordinates: [33.5951, -7.6187], type: "terminal", status: "active", routes: ["Casa Line 1"], labelColor: "blue" },
+  { id: "cs2", name: "Morocco Mall", coordinates: [33.5342, -7.6698], type: "major", status: "active", routes: ["Casa Line 1", "Casa Line 2"], labelColor: "green" },
+  { id: "cs3", name: "Hassan II Mosque", coordinates: [33.6084, -7.6325], type: "major", status: "busy", routes: ["Casa Line 1"], labelColor: "orange" },
   // Tangier stations
-  {
-    id: "ts1",
-    name: "Port Tanger Med",
-    coordinates: [35.7795, -5.8108],
-    type: "terminal",
-    status: "active",
-    routes: ["Tanger Line 1"],
-    labelColor: "blue",
-  },
-  {
-    id: "ts2",
-    name: "Grand Socco",
-    coordinates: [35.7813, -5.8103],
-    type: "major",
-    status: "active",
-    routes: ["Tanger Line 1", "Tanger Line 2"],
-    labelColor: "green",
-  },
-  {
-    id: "ts3",
-    name: "Kasbah",
-    coordinates: [35.7847, -5.8139],
-    type: "regular",
-    status: "busy",
-    routes: ["Tanger Line 1"],
-    labelColor: "orange",
-  },
-  {
-    id: "ts4",
-    name: "Ibn Batouta Mall",
-    coordinates: [35.7595, -5.8337],
-    type: "major",
-    status: "active",
-    routes: ["Tanger Line 2"],
-    labelColor: "purple",
-  },
+  { id: "ts1", name: "Port Tanger Med", coordinates: [35.7795, -5.8108], type: "terminal", status: "active", routes: ["Tanger Line 1"], labelColor: "blue" },
+  { id: "ts2", name: "Grand Socco", coordinates: [35.7813, -5.8103], type: "major", status: "active", routes: ["Tanger Line 1", "Tanger Line 2"], labelColor: "green" },
 ]
 
-// Simulated bus data with route following
+// Bus Data
 const initialBuses: BusData[] = [
   // Marrakech buses
   {
-    id: "BUS-101",
-    name: "Express 101",
-    route: "Route 1",
-    routeColor: "#8b5cf6",
-    coordinates: [31.648, -7.992],
-    status: "moving",
-    speed: 45,
-    heading: 135,
-    passengers: 32,
-    nextStop: "Bab Agnaou",
-    eta: "3 min",
+    id: "BUS-101", name: "Express 101", route: "Route 1", routeColor: "#8b5cf6", coordinates: [31.648, -7.992],
+    status: "moving", speed: 45, heading: 135, passengers: 32, nextStop: "Bab Agnaou", eta: "3 min",
   },
   {
-    id: "BUS-202",
-    name: "City Line 202",
-    route: "Route 2",
-    routeColor: "#22c55e",
-    coordinates: [31.642, -7.99],
-    status: "moving",
-    speed: 38,
-    heading: 200,
-    passengers: 45,
-    nextStop: "Ben Youssef",
-    eta: "5 min",
+    id: "BUS-202", name: "City Line 202", route: "Route 2", routeColor: "#22c55e", coordinates: [31.642, -7.99],
+    status: "moving", speed: 38, heading: 200, passengers: 45, nextStop: "Ben Youssef", eta: "5 min",
   },
   {
-    id: "BUS-303",
-    name: "Metro 303",
-    route: "Route 3",
-    routeColor: "#06b6d4",
-    coordinates: [31.643, -8.005],
-    status: "moving",
-    speed: 35,
-    heading: 90,
-    passengers: 28,
-    nextStop: "Bab Agnaou",
-    eta: "4 min",
+    id: "BUS-303", name: "Metro 303", route: "Route 3", routeColor: "#06b6d4", coordinates: [31.643, -8.005],
+    status: "moving", speed: 35, heading: 90, passengers: 28, nextStop: "Bab Agnaou", eta: "4 min",
   },
   {
-    id: "BUS-104",
-    name: "Express 104",
-    route: "Route 1",
-    routeColor: "#8b5cf6",
-    coordinates: [31.627, -7.992],
-    status: "moving",
-    speed: 42,
-    heading: 45,
-    passengers: 38,
-    nextStop: "Koutoubia",
-    eta: "2 min",
+    id: "BUS-104", name: "Express 104", route: "Route 1", routeColor: "#8b5cf6", coordinates: [31.627, -7.992],
+    status: "moving", speed: 42, heading: 45, passengers: 38, nextStop: "Koutoubia", eta: "2 min",
   },
   {
-    id: "BUS-205",
-    name: "City Line 205",
-    route: "Route 2",
-    routeColor: "#22c55e",
-    coordinates: [31.625, -7.995],
-    status: "moving",
-    speed: 40,
-    heading: 180,
-    passengers: 52,
-    nextStop: "Theatre Royal",
-    eta: "6 min",
-  },
-  {
-    id: "BUS-306",
-    name: "Metro 306",
-    route: "Route 3",
-    routeColor: "#06b6d4",
-    coordinates: [31.638, -7.997],
-    status: "moving",
-    speed: 37,
-    heading: 270,
-    passengers: 25,
-    nextStop: "Place de la",
-    eta: "7 min",
+    id: "BUS-205", name: "City Line 205", route: "Route 2", routeColor: "#22c55e", coordinates: [31.625, -7.995],
+    status: "moving", speed: 40, heading: 180, passengers: 52, nextStop: "Theatre Royal", eta: "6 min",
   },
   // Casablanca buses
   {
-    id: "CASA-101",
-    name: "Casa Express 101",
-    route: "Casa Line 1",
-    routeColor: "#ef4444",
-    coordinates: [33.598, -7.625],
-    status: "moving",
-    speed: 50,
-    heading: 180,
-    passengers: 48,
-    nextStop: "Hassan II Mosque",
-    eta: "4 min",
-  },
-  {
-    id: "CASA-102",
-    name: "Casa Express 102",
-    route: "Casa Line 1",
-    routeColor: "#ef4444",
-    coordinates: [33.56, -7.65],
-    status: "moving",
-    speed: 45,
-    heading: 90,
-    passengers: 41,
-    nextStop: "Morocco Mall",
-    eta: "6 min",
-  },
-  {
-    id: "CASA-201",
-    name: "Casa Metro 201",
-    route: "Casa Line 2",
-    routeColor: "#f59e0b",
-    coordinates: [33.58, -7.628],
-    status: "moving",
-    speed: 42,
-    heading: 270,
-    passengers: 35,
-    nextStop: "Twin Center",
-    eta: "3 min",
-  },
-  {
-    id: "CASA-202",
-    name: "Casa Metro 202",
-    route: "Casa Line 2",
-    routeColor: "#f59e0b",
-    coordinates: [33.575, -7.63],
-    status: "moving",
-    speed: 48,
-    heading: 45,
-    passengers: 39,
-    nextStop: "Maarif",
-    eta: "5 min",
+    id: "CASA-101", name: "Casa Express 101", route: "Casa Line 1", routeColor: "#ef4444", coordinates: [33.598, -7.625],
+    status: "moving", speed: 50, heading: 180, passengers: 48, nextStop: "Hassan II Mosque", eta: "4 min",
   },
   // Tangier buses
   {
-    id: "TANG-101",
-    name: "Tanger Express 101",
-    route: "Tanger Line 1",
-    routeColor: "#10b981",
-    coordinates: [35.782, -5.812],
-    status: "moving",
-    speed: 40,
-    heading: 90,
-    passengers: 30,
-    nextStop: "Grand Socco",
-    eta: "2 min",
-  },
-  {
-    id: "TANG-102",
-    name: "Tanger Express 102",
-    route: "Tanger Line 1",
-    routeColor: "#10b981",
-    coordinates: [35.785, -5.814],
-    status: "moving",
-    speed: 38,
-    heading: 180,
-    passengers: 27,
-    nextStop: "Medina",
-    eta: "4 min",
-  },
-  {
-    id: "TANG-201",
-    name: "Tanger Metro 201",
-    route: "Tanger Line 2",
-    routeColor: "#6366f1",
-    coordinates: [35.765, -5.83],
-    status: "moving",
-    speed: 44,
-    heading: 270,
-    passengers: 33,
-    nextStop: "City Center",
-    eta: "5 min",
-  },
-  // Inter-city buses
-  {
-    id: "IC-TC-01",
-    name: "Tanger-Casa Express",
-    route: "Tanger-Casa Express",
-    routeColor: "#ec4899",
-    coordinates: [34.5, -6.5],
-    status: "moving",
-    speed: 85,
-    heading: 180,
-    passengers: 45,
-    nextStop: "Casablanca",
-    eta: "2h 30min",
-  },
-  {
-    id: "IC-CM-01",
-    name: "Casa-Marrakech Express",
-    route: "Casa-Marrakech Express",
-    routeColor: "#a855f7",
-    coordinates: [32.5, -7.85],
-    status: "moving",
-    speed: 90,
-    heading: 200,
-    passengers: 52,
-    nextStop: "Marrakech",
-    eta: "1h 45min",
-  },
-  {
-    id: "IC-TM-01",
-    name: "Tanger-Marrakech Direct",
-    route: "Tanger-Marrakech Direct",
-    routeColor: "#14b8a6",
-    coordinates: [33.5, -7.0],
-    status: "moving",
-    speed: 88,
-    heading: 220,
-    passengers: 48,
-    nextStop: "Marrakech",
-    eta: "4h 15min",
+    id: "TANG-101", name: "Tanger Express 101", route: "Tanger Line 1", routeColor: "#10b981", coordinates: [35.782, -5.812],
+    status: "moving", speed: 40, heading: 90, passengers: 30, nextStop: "Grand Socco", eta: "2 min",
   },
 ]
 
-// Route paths - More detailed coordinates for smoother lines
+// Routes
 const routes = [
   // Marrakech routes
   {
-    id: "route-1",
-    name: "Route 1",
-    color: "#8b5cf6",
+    id: "route-1", name: "Route 1", color: "#8b5cf6",
     coordinates: [
-      [31.6695, -7.9811], // Palmeraie
-      [31.667, -7.985],
-      [31.664, -7.987],
-      [31.66, -7.988],
-      [31.655, -7.989],
-      [31.65, -7.99], // Sorelle Garden
-      [31.648, -7.992],
-      [31.646, -7.995],
-      [31.644, -7.998],
-      [31.64, -8.0], // Bab Doukkala
-      [31.639, -7.995],
-      [31.638, -7.99],
-      [31.637, -7.982], // Ben Youssef
-      [31.635, -7.985],
-      [31.632, -7.987],
-      [31.63, -7.988],
-      [31.6258, -7.9891], // Jemaa el Fna
-      [31.627, -7.992],
-      [31.628, -7.993], // Koutoubia
-      [31.626, -7.996],
-      [31.624, -7.999],
-      [31.622, -8.002], // Train Station
+      [31.6695, -7.9811], [31.667, -7.985], [31.664, -7.987], [31.66, -7.988], [31.655, -7.989],
+      [31.65, -7.99], [31.648, -7.992], [31.646, -7.995], [31.644, -7.998], [31.64, -8.0],
+      [31.639, -7.995], [31.638, -7.99], [31.637, -7.982], [31.635, -7.985], [31.632, -7.987],
+      [31.63, -7.988], [31.6258, -7.9891], [31.627, -7.992], [31.628, -7.993], [31.626, -7.996],
+      [31.624, -7.999], [31.622, -8.002]
     ] as [number, number][],
   },
   {
-    id: "route-2",
-    name: "Route 2",
-    color: "#22c55e",
+    id: "route-2", name: "Route 2", color: "#22c55e",
     coordinates: [
-      [31.65, -7.99], // Sorelle Garden
-      [31.648, -7.99],
-      [31.645, -7.99],
-      [31.642, -7.99],
-      [31.64, -7.99],
-      [31.637, -7.989],
-      [31.637, -7.982], // Ben Youssef
-      [31.635, -7.985],
-      [31.632, -7.987],
-      [31.63, -7.988],
-      [31.6258, -7.9891], // Jemaa el Fna
-      [31.625, -7.995],
-      [31.624, -8.002],
-      [31.624, -8.008], // Theatre Royal
-      [31.622, -8.01],
-      [31.62, -8.014],
-      [31.618, -8.018], // Hivernage Hotel
-      [31.62, -8.01],
-      [31.622, -8.002], // Train Station
+      [31.65, -7.99], [31.648, -7.99], [31.645, -7.99], [31.642, -7.99], [31.64, -7.99],
+      [31.637, -7.989], [31.637, -7.982], [31.635, -7.985], [31.632, -7.987], [31.63, -7.988],
+      [31.6258, -7.9891], [31.625, -7.995], [31.624, -8.002], [31.624, -8.008], [31.622, -8.01],
+      [31.62, -8.014], [31.618, -8.018], [31.62, -8.01], [31.622, -8.002]
     ] as [number, number][],
   },
   {
-    id: "route-3",
-    name: "Route 3",
-    color: "#06b6d4",
+    id: "route-3", name: "Route 3", color: "#06b6d4",
     coordinates: [
-      [31.645, -8.01], // Route 3 start
-      [31.644, -8.008],
-      [31.643, -8.005],
-      [31.641, -8.002],
-      [31.64, -8.0], // Bab Doukkala
-      [31.638, -7.997],
-      [31.636, -7.994],
-      [31.634, -7.99],
-      [31.632, -7.988], // Place de la
-      [31.63, -7.99],
-      [31.628, -7.993], // Koutoubia
-      [31.626, -7.996],
-      [31.624, -7.999],
-      [31.622, -8.002], // Train Station
+      [31.645, -8.01], [31.644, -8.008], [31.643, -8.005], [31.641, -8.002], [31.64, -8.0],
+      [31.638, -7.997], [31.636, -7.994], [31.634, -7.99], [31.632, -7.988], [31.63, -7.99],
+      [31.628, -7.993], [31.626, -7.996], [31.624, -7.999], [31.622, -8.002]
     ] as [number, number][],
   },
   // Casablanca routes
   {
-    id: "casa-route-1",
-    name: "Casa Line 1",
-    color: "#ef4444",
-    coordinates: [
-      [33.5951, -7.6187], // Casa Port
-      [33.598, -7.625],
-      [33.602, -7.628],
-      [33.6084, -7.6325], // Hassan II Mosque
-      [33.605, -7.64],
-      [33.598, -7.65],
-      [33.58, -7.66],
-      [33.56, -7.665],
-      [33.5342, -7.6698], // Morocco Mall
-    ] as [number, number][],
+    id: "casa-route-1", name: "Casa Line 1", color: "#ef4444",
+    coordinates: [[33.5951, -7.6187], [33.598, -7.625], [33.602, -7.628], [33.6084, -7.6325], [33.605, -7.64], [33.598, -7.65], [33.58, -7.66], [33.56, -7.665], [33.5342, -7.6698]] as [number, number][],
   },
   {
-    id: "casa-route-2",
-    name: "Casa Line 2",
-    color: "#f59e0b",
-    coordinates: [
-      [33.5342, -7.6698], // Morocco Mall
-      [33.545, -7.66],
-      [33.56, -7.645],
-      [33.5731, -7.6289], // Maarif
-      [33.58, -7.628],
-      [33.5892, -7.6264], // Twin Center
-    ] as [number, number][],
+    id: "casa-route-2", name: "Casa Line 2", color: "#f59e0b",
+    coordinates: [[33.5342, -7.6698], [33.545, -7.66], [33.56, -7.645], [33.5731, -7.6289], [33.58, -7.628], [33.5892, -7.6264]] as [number, number][],
   },
   // Tangier routes
   {
-    id: "tanger-route-1",
-    name: "Tanger Line 1",
-    color: "#10b981",
-    coordinates: [
-      [35.7795, -5.8108], // Tanger Port
-      [35.782, -5.812],
-      [35.7813, -5.8103], // Grand Socco
-      [35.783, -5.812],
-      [35.7847, -5.8139], // Medina
-    ] as [number, number][],
-  },
-  {
-    id: "tanger-route-2",
-    name: "Tanger Line 2",
-    color: "#6366f1",
-    coordinates: [
-      [35.7813, -5.8103], // Grand Socco
-      [35.778, -5.815],
-      [35.77, -5.82],
-      [35.765, -5.83],
-      [35.7595, -5.8337], // Tanger City Center
-    ] as [number, number][],
-  },
-  // Inter-city routes
-  {
-    id: "intercity-tanger-casa",
-    name: "Tanger-Casa Express",
-    color: "#ec4899",
-    coordinates: [
-      [35.7795, -5.8108], // Tanger Port
-      [35.5, -5.9],
-      [35.0, -6.2],
-      [34.5, -6.5],
-      [34.0, -6.8],
-      [33.6, -7.2],
-      [33.5951, -7.6187], // Casa Port
-    ] as [number, number][],
-  },
-  {
-    id: "intercity-casa-marrakech",
-    name: "Casa-Marrakech Express",
-    color: "#a855f7",
-    coordinates: [
-      [33.5951, -7.6187], // Casa Port
-      [33.3, -7.7],
-      [33.0, -7.8],
-      [32.5, -7.85],
-      [32.0, -7.9],
-      [31.6695, -7.9811], // Marrakech Palmeraie
-    ] as [number, number][],
-  },
-  {
-    id: "intercity-tanger-marrakech",
-    name: "Tanger-Marrakech Direct",
-    color: "#14b8a6",
-    coordinates: [
-      [35.7795, -5.8108], // Tanger Port
-      [35.0, -6.0],
-      [34.2, -6.5],
-      [33.5, -7.0],
-      [32.8, -7.4],
-      [32.2, -7.7],
-      [31.6695, -7.9811], // Marrakech Palmeraie
-    ] as [number, number][],
+    id: "tanger-route-1", name: "Tanger Line 1", color: "#10b981",
+    coordinates: [[35.7795, -5.8108], [35.782, -5.812], [35.7813, -5.8103], [35.783, -5.812], [35.7847, -5.8139]] as [number, number][],
   },
 ]
 
-const labelColors: Record<string, { bg: string; text: string }> = {
-  blue: { bg: "#3b82f6", text: "#ffffff" },
-  green: { bg: "#22c55e", text: "#ffffff" },
-  orange: { bg: "#f97316", text: "#ffffff" },
-  purple: { bg: "#8b5cf6", text: "#ffffff" },
-  red: { bg: "#ef4444", text: "#ffffff" },
+// Utilities
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371 // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180)
+  const dLon = (lon2 - lon1) * (Math.PI / 180)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c // Distance in km
+}
+
+// Find nearest station to a given location
+const findNearestStation = (lat: number, lon: number): { station: StationData; distance: number } | null => {
+  if (stations.length === 0) return null
+
+  let nearest = stations[0]
+  let minDistance = calculateDistance(lat, lon, nearest.coordinates[0], nearest.coordinates[1])
+
+  for (const station of stations) {
+    const dist = calculateDistance(lat, lon, station.coordinates[0], station.coordinates[1])
+    if (dist < minDistance) {
+      minDistance = dist
+      nearest = station
+    }
+  }
+
+  return { station: nearest, distance: minDistance }
+}
+
+// Reverse geocode to get location name
+const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+    const data = await res.json()
+    if (data.address) {
+      // Return city, town, or village name
+      return data.address.city || data.address.town || data.address.village || data.address.suburb || data.display_name?.split(',')[0] || "Unknown Location"
+    }
+    return "Unknown Location"
+  } catch (e) {
+    console.error("Reverse geocoding failed:", e)
+    return "Unknown Location"
+  }
+}
+
+// Calculate route between two points using OSRM
+const calculateRoutePath = async (start: [number, number], end: [number, number]): Promise<[number, number][]> => {
+  try {
+    const res = await fetch(`https://router.project-osrm.org/route/v1/foot/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`)
+    const data = await res.json()
+    if (data.routes && data.routes.length > 0) {
+      return data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number])
+    }
+    // Fallback to straight line
+    return [start, end]
+  } catch (e) {
+    console.error("Route calculation failed:", e)
+    return [start, end]
+  }
 }
 
 const MapControlButtons = dynamic(
@@ -699,23 +238,19 @@ const MapControlButtons = dynamic(
         isFullscreen,
         userLocation,
         setUserLocation,
+        setMapStyle,
       }: {
         onFullscreenToggle: () => void
         isFullscreen: boolean
         userLocation: [number, number] | null
         setUserLocation: (loc: [number, number] | null) => void
+        setMapStyle: (style: "dark" | "streets" | "satellite") => void
       }) => {
         const map = useMap()
+        const [showStyleMenu, setShowStyleMenu] = useState(false)
 
-        const handleZoomIn = () => {
-          const currentZoom = map.getZoom()
-          map.setZoom(currentZoom + 1, { animate: true, duration: 0.3 })
-        }
-
-        const handleZoomOut = () => {
-          const currentZoom = map.getZoom()
-          map.setZoom(currentZoom - 1, { animate: true, duration: 0.3 })
-        }
+        const handleZoomIn = () => map.setZoom(map.getZoom() + 1, { animate: true })
+        const handleZoomOut = () => map.setZoom(map.getZoom() - 1, { animate: true })
 
         const handleMyLocation = () => {
           if (navigator.geolocation) {
@@ -726,94 +261,71 @@ const MapControlButtons = dynamic(
                 map.flyTo([latitude, longitude], 16, { duration: 1.5 })
               },
               (error) => {
-                console.error("Error getting location:", error.message || "Unknown error")
-                // User-friendly error messages
-                let errorMessage = "Unable to get your location."
-                if (error.code === 1) {
-                  errorMessage = "Location access denied. Please enable location permissions."
-                } else if (error.code === 2) {
-                  errorMessage = "Location unavailable. Please try again."
-                } else if (error.code === 3) {
-                  errorMessage = "Location request timed out. Please try again."
-                }
-                alert(errorMessage)
+                // Fallback to Marrakech center if geolocation fails
+                toast.error("Location unavailable - showing Marrakech center")
+                const marrakechCenter: [number, number] = [31.6295, -7.9811]
+                setUserLocation(marrakechCenter)
+                map.flyTo(marrakechCenter, 14, { duration: 1.5 })
               },
-              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+              { enableHighAccuracy: true, timeout: 5000 }
             )
           } else {
-            alert("Geolocation is not supported by your browser")
+            toast.error("Geolocation not supported")
+            const marrakechCenter: [number, number] = [31.6295, -7.9811]
+            setUserLocation(marrakechCenter)
+            map.flyTo(marrakechCenter, 14, { duration: 1.5 })
           }
         }
 
-        const handleChangeLocation = () => {
-          // Center on Morocco overview with animation
-          map.flyTo([31.638, -7.998], 12, { duration: 1.5 })
-        }
+        const handleChangeLocation = () => map.flyTo([31.638, -7.998], 12, { duration: 1.5 })
 
         return (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[1000]">
-            {/* Zoom Controls */}
-            <div className="flex flex-col rounded-lg bg-card/95 backdrop-blur-md border border-border shadow-lg overflow-hidden">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-[1000]">
+            {/* Style Switcher */}
+            <div className="relative">
               <button
-                onClick={handleZoomIn}
-                className="p-2.5 hover:bg-accent text-foreground transition-colors border-b border-border"
-                title="Zoom In"
+                onClick={() => setShowStyleMenu(!showStyleMenu)}
+                className="p-3 rounded-xl bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl hover:bg-white/10 text-white transition-colors"
+                title="Map Layers"
               >
-                <Plus className="w-5 h-5" />
+                <Layers className="w-5 h-5" />
               </button>
-              <button
-                onClick={handleZoomOut}
-                className="p-2.5 hover:bg-accent text-foreground transition-colors"
-                title="Zoom Out"
-              >
-                <Minus className="w-5 h-5" />
-              </button>
+
+              {showStyleMenu && (
+                <div className="absolute right-full mr-3 top-0 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-2 w-32 flex flex-col gap-1 shadow-2xl">
+                  <button onClick={() => { setMapStyle('dark'); setShowStyleMenu(false) }} className="text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-lg">Dark Neon</button>
+                  <button onClick={() => { setMapStyle('streets'); setShowStyleMenu(false) }} className="text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-lg">Light</button>
+                  <button onClick={() => { setMapStyle('satellite'); setShowStyleMenu(false) }} className="text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-lg">Satellite</button>
+                </div>
+              )}
             </div>
 
-            {/* Fullscreen Button */}
-            <button
-              onClick={onFullscreenToggle}
-              className="p-2.5 rounded-lg bg-card/95 backdrop-blur-md border border-border shadow-lg hover:bg-accent text-foreground transition-colors"
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
+            <div className="flex flex-col rounded-xl bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+              <button onClick={handleZoomIn} className="p-3 hover:bg-white/10 text-white transition-colors border-b border-white/5"><Plus className="w-5 h-5" /></button>
+              <button onClick={handleZoomOut} className="p-3 hover:bg-white/10 text-white transition-colors"><Minus className="w-5 h-5" /></button>
+            </div>
+
+            <button onClick={onFullscreenToggle} className="p-3 rounded-xl bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl hover:bg-white/10 text-white transition-colors">
               {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
             </button>
 
-            {/* My Location Button */}
-            <button
-              onClick={handleMyLocation}
-              className="p-2.5 rounded-lg bg-card/95 backdrop-blur-md border border-border shadow-lg hover:bg-accent text-foreground transition-colors"
-              title="My Location"
-            >
+            <button onClick={handleMyLocation} className="p-3 rounded-xl bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl hover:bg-white/10 text-white transition-colors">
               <Locate className="w-5 h-5" />
-            </button>
-
-            {/* Change Location / Reset View */}
-            <button
-              onClick={handleChangeLocation}
-              className="p-2.5 rounded-lg bg-card/95 backdrop-blur-md border border-border shadow-lg hover:bg-accent text-foreground transition-colors"
-              title="Reset to Marrakech"
-            >
-              <Navigation className="w-5 h-5" />
             </button>
           </div>
         )
       }
-
       return ControlButtons
     }),
   { ssr: false },
 )
 
-// Dynamic imports for react-leaflet
+// Dynamic Leaflet Imports
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
 const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false })
-const CircleMarker = dynamic(() => import("react-leaflet").then((mod) => mod.CircleMarker), { ssr: false })
 
-// Component to handle map resize
 const MapResizeHandler = dynamic(
   () =>
     Promise.all([
@@ -825,32 +337,117 @@ const MapResizeHandler = dynamic(
       return function MapResizeHandler() {
         const map = useMap()
         useEffect(() => {
-          const handleResize = () => {
-            setTimeout(() => {
-              try {
-                if (map && map.invalidateSize) {
-                  map.invalidateSize()
-                }
-              } catch (error) {
-                console.warn('Map resize error:', error)
-              }
-            }, 100)
-          }
-          window.addEventListener('resize', handleResize)
-          // Also invalidate on mount
-          setTimeout(() => {
-            try {
-              if (map && map.invalidateSize) {
-                map.invalidateSize()
-              }
-            } catch (error) {
-              console.warn('Map initial resize error:', error)
-            }
-          }, 200)
-          return () => {
-            window.removeEventListener('resize', handleResize)
-          }
+          const resizeObserver = new ResizeObserver(() => {
+            if (map) map.invalidateSize()
+          })
+          const container = map.getContainer()
+          resizeObserver.observe(container)
+          return () => resizeObserver.disconnect()
         }, [map])
+        return null
+      }
+    }),
+  { ssr: false }
+)
+
+const MapEventHandler = dynamic(
+  () =>
+    Promise.all([
+      import("react-leaflet"),
+      import("react")
+    ]).then(([leafletMod, reactMod]) => {
+      const { useMap } = leafletMod
+      const { useEffect } = reactMod
+
+      // Default fallback location (Casablanca city center)
+      const FALLBACK_LOCATION: [number, number] = [33.5731, -7.5898]
+
+      return function MapEventHandler({
+        setUserLocation,
+        setDestination,
+        setDestinationName,
+        setRoutePath,
+        setTripMetadata
+      }: {
+        setUserLocation: (loc: [number, number] | null) => void
+        setDestination: (loc: [number, number] | null) => void
+        setDestinationName: (name: string | null) => void
+        setRoutePath: (path: [number, number][] | null) => void
+        setTripMetadata: (meta: TripMetadata | null) => void
+      }) {
+        const map = useMap()
+
+        useEffect(() => {
+          if (!map) return
+          console.log("[MapEventHandler] Attaching location listener")
+
+          const processLocation = async (latitude: number, longitude: number) => {
+            const userLoc: [number, number] = [latitude, longitude]
+            setUserLocation(userLoc)
+
+            // Find nearest station
+            const nearest = findNearestStation(latitude, longitude)
+            if (nearest) {
+              const stationCoords: [number, number] = [nearest.station.coordinates[0], nearest.station.coordinates[1]]
+              setDestination(stationCoords)
+              setDestinationName(nearest.station.name)
+
+              // Calculate route
+              const route = await calculateRoutePath(userLoc, stationCoords)
+              setRoutePath(route)
+
+              // Estimate walking time (5 km/h average walking speed)
+              const walkingTime = Math.round((nearest.distance / 5) * 60)
+              setTripMetadata({
+                distance: nearest.distance.toFixed(1) + " km",
+                duration: walkingTime + " min walk"
+              })
+
+              // Fly to show both user and station
+              const bounds = [userLoc, stationCoords]
+              map.flyToBounds(bounds as any, { padding: [50, 50], duration: 1.5 })
+
+              toast.success(`Nearest station: ${nearest.station.name} (${nearest.distance.toFixed(1)} km)`, { id: "locate-loader", duration: 4000 })
+
+              // Emit location info for dashboard
+              const locationName = await reverseGeocode(latitude, longitude)
+              window.dispatchEvent(new CustomEvent('user-location-update', {
+                detail: {
+                  locationName,
+                  nearestStation: nearest.station.name,
+                  distance: nearest.distance.toFixed(1)
+                }
+              }))
+            } else {
+              map.flyTo(userLoc, 16, { duration: 1.5 })
+              toast.success("Location centered", { id: "locate-loader" })
+            }
+          }
+
+          const handleRemoteLocate = () => {
+            console.log("[MapEventHandler] Location request received")
+            if (navigator.geolocation) {
+              toast.loading("Finding nearest station...", { id: "locate-loader" })
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  const { latitude, longitude } = position.coords
+                  console.log("[MapEventHandler] Location found:", latitude, longitude)
+                  processLocation(latitude, longitude)
+                },
+                (error) => {
+                  console.error("[MapEventHandler] Location error, using fallback:", error)
+                  processLocation(FALLBACK_LOCATION[0], FALLBACK_LOCATION[1])
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+              )
+            } else {
+              processLocation(FALLBACK_LOCATION[0], FALLBACK_LOCATION[1])
+            }
+          }
+
+          window.addEventListener('map-request-locate', handleRemoteLocate)
+          return () => window.removeEventListener('map-request-locate', handleRemoteLocate)
+        }, [map, setUserLocation, setDestination, setDestinationName, setRoutePath, setTripMetadata])
         return null
       }
     }),
@@ -863,639 +460,428 @@ export function MapboxMap({
   centerLat = 33.5,
   centerLng = -7.0,
   zoom = 6,
+  showControls = true
 }: MapboxMapProps) {
   const [buses, setBuses] = useState<BusData[]>(initialBuses)
   const [selectedBus, setSelectedBus] = useState<BusData | null>(null)
+
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null)
-  const [mapStyle, setMapStyle] = useState<"dark" | "satellite" | "streets">("dark")
-  const [showRoutes, setShowRoutes] = useState(true)
   const [isClient, setIsClient] = useState(false)
   const [L, setL] = useState<any>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
-  const [mapInstance, setMapInstance] = useState<any>(null)
+  const [mapStyle, setMapStyle] = useState<"dark" | "streets" | "satellite">("dark")
 
+  const { theme } = useTheme()
+  const [destination, setDestination] = useState<[number, number] | null>(null)
+  const [destinationName, setDestinationName] = useState<string | null>(null)
+  const [routePath, setRoutePath] = useState<[number, number][] | null>(null)
+  const [tripMetadata, setTripMetadata] = useState<TripMetadata | null>(null)
+  const [showSchedule, setShowSchedule] = useState(false)
+
+  // Subscribe to Global Search Routing
+  useEffect(() => {
+    const unsubscribe = routeEventBus.subscribe((place: PlaceResult) => {
+      handleSelectPlace(place)
+    })
+    return () => unsubscribe()
+  }, [userLocation])
+
+  // Client Initialization
   useEffect(() => {
     setIsClient(true)
     import("leaflet").then((leaflet) => {
       setL(leaflet.default)
-      // Fix default icon issue
       delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl
       leaflet.default.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
         iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
       })
-    }).catch((error) => {
-      console.error('Failed to load Leaflet:', error)
     })
   }, [])
 
-  // Cleanup map instance on unmount
-  useEffect(() => {
-    return () => {
-      // React-Leaflet handles map cleanup automatically.
-      // Manual removal can cause "Map container is being reused by another instance" errors
-      // especially in Strict Mode or when components remount quickly.
-      setMapInstance(null)
-    }
-  }, [])
-
+  // Fullscreen Handler
   const handleFullscreenToggle = useCallback(() => {
     const mapContainer = document.getElementById("map-container")
     if (!mapContainer) return
-
-    if (!isFullscreen) {
-      if (mapContainer.requestFullscreen) {
-        mapContainer.requestFullscreen()
-      }
+    if (!document.fullscreenElement) {
+      mapContainer.requestFullscreen().catch(err => console.error("Error attempting to enable fullscreen:", err))
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
-      }
+      document.exitFullscreen()
     }
-    setIsFullscreen(!isFullscreen)
-  }, [isFullscreen])
+  }, [])
 
+  // Sync fullscreen state with browser events (handles Esc key)
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
-    document.addEventListener("fullscreenchange", handleFullscreenChange)
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  // Simulate bus movement along routes
+  // Bus Movement Simulation
   useEffect(() => {
     const interval = setInterval(() => {
-      setBuses((prevBuses) =>
-        prevBuses.map((bus) => {
-          if (bus.status !== "moving") return bus
-          
-          // Find the bus's route
-          const route = routes.find((r) => r.name === bus.route)
-          if (!route) return bus
-          
-          // Find closest point on route
-          let closestIndex = 0
-          let minDistance = Infinity
-          route.coordinates.forEach((coord, index) => {
-            const distance = Math.sqrt(
-              Math.pow(coord[0] - bus.coordinates[0], 2) +
-              Math.pow(coord[1] - bus.coordinates[1], 2)
-            )
-            if (distance < minDistance) {
-              minDistance = distance
-              closestIndex = index
-            }
-          })
-          
-          // Move to next point on route
-          const nextIndex = (closestIndex + 1) % route.coordinates.length
-          const nextPoint = route.coordinates[nextIndex]
-          
-          // Calculate direction
-          const dx = nextPoint[1] - bus.coordinates[1]
-          const dy = nextPoint[0] - bus.coordinates[0]
-          const heading = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360
-          
-          // Move towards next point (smaller step for smoother movement)
-          const step = 0.0003
-          const newLat = bus.coordinates[0] + dy * step
-          const newLng = bus.coordinates[1] + dx * step
-          
-          return {
-            ...bus,
-            coordinates: [newLat, newLng] as [number, number],
-            speed: Math.floor(30 + Math.random() * 25),
-            passengers: Math.max(0, Math.min(60, bus.passengers + Math.floor(Math.random() * 5) - 2)),
-            heading,
-          }
-        }),
-      )
-    }, 1500) // Update every 1.5 seconds for smoother movement
-    return () => clearInterval(interval)
+      setBuses((prev) => prev.map((bus) => {
+        if (bus.status !== "moving") return bus
+        const route = routes.find((r) => r.name === bus.route)
+        if (!route) return bus
+
+        let closest = 0, minDst = Infinity
+        route.coordinates.forEach((c, i) => {
+          const d = Math.sqrt(Math.pow(c[0] - bus.coordinates[0], 2) + Math.pow(c[1] - bus.coordinates[1], 2))
+          if (d < minDst) { minDst = d; closest = i }
+        })
+
+        const next = route.coordinates[(closest + 1) % route.coordinates.length]
+        const step = 0.0003
+        const dy = next[0] - bus.coordinates[0], dx = next[1] - bus.coordinates[1]
+
+        return { ...bus, coordinates: [bus.coordinates[0] + dy * step, bus.coordinates[1] + dx * step] as [number, number] }
+      }))
+    }, 1500)
   }, [])
 
-  const getTileUrl = () => {
-    switch (mapStyle) {
-      case "satellite":
-        return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
-      case "streets":
-        return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
-      default:
-        return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+
+  const handleSelectPlace = async (place: PlaceResult) => {
+    const lat = parseFloat(place.lat)
+    const lon = parseFloat(place.lon)
+    setDestination([lat, lon])
+    setDestinationName(place.display_name.split(',')[0])
+
+    if (userLocation) {
+      await calculateRoute(userLocation, [lat, lon])
+    }
+    // Fly to destination
+    const mapContainer = document.querySelector('.leaflet-container');
+    // We can't easily access 'map' here without ref, but state update will trigger re-render.
+  }
+
+  const calculateRoute = async (start: [number, number], end: [number, number]) => {
+    try {
+      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`)
+      const data = await res.json()
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0]
+        const coords = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]])
+        setRoutePath(coords)
+        setTripMetadata({
+          distance: (route.distance / 1000).toFixed(1) + " km",
+          duration: Math.round(route.duration / 60) + " min"
+        })
+      }
+    } catch (e) {
+      console.error("Routing failed", e)
+      // Fallback straight line
+      setRoutePath([start, end])
+      setTripMetadata({ distance: "N/A", duration: "N/A" })
     }
   }
 
+  // Icon Creators
   const createStationIcon = (station: StationData) => {
     if (!L) return null
-    const colors = labelColors[station.labelColor]
-    const iconContent =
-      station.status === "locked"
-        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
-        : station.type === "terminal"
-          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`
-          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`
+    const isActive = mapStyle === 'dark'
+    const color = isActive ? 'white' : '#333'
+    const bg = isActive ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)'
+    const text = isActive ? 'white' : 'black'
 
     const html = `
-      <div style="display: flex; align-items: center; position: relative;">
-        <div style="
-          width: 40px; 
-          height: 40px; 
-          border-radius: 50%; 
-          background: white; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          border: 3px solid ${station.status === "busy" ? "#ef4444" : "white"};
-        ">
-          ${iconContent}
-        </div>
-        <div style="
-          position: absolute;
-          left: 48px;
-          white-space: nowrap;
-          padding: 6px 14px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 700;
-          font-family: system-ui, -apple-system, sans-serif;
-          background: ${colors.bg};
-          color: ${colors.text};
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        ">
-          ${station.name}
-        </div>
+      <div style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 16px; height: 16px; background: ${color}; border-radius: 50%; border: 3px solid ${isActive ? '#111' : 'white'}; box-shadow: 0 2px 10px rgba(0,0,0,0.2);"></div>
+        <div style="margin-top: 4px; background: ${bg}; backdrop-filter: blur(4px); padding: 2px 6px; border-radius: 4px; color: ${text}; font-size: 10px; font-weight: 600;">${station.name}</div>
       </div>
     `
-    return L.divIcon({
-      html,
-      className: "station-marker",
-      iconSize: [200, 44],
-      iconAnchor: [20, 22],
-    })
+    return L.divIcon({ html, className: "station-marker", iconSize: [80, 50], iconAnchor: [40, 8] })
   }
 
   const createBusIcon = (bus: BusData, isSelected: boolean) => {
     if (!L) return null
     const scale = isSelected ? 1.2 : 1
+    const borderColor = mapStyle === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
+
     const html = `
-      <div style="
-        width: ${48 * scale}px; 
-        height: ${48 * scale}px; 
-        border-radius: 50%; 
-        border: 4px solid #ef4444; 
-        background: white; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
-        animation: pulse 2s infinite;
-      ">
-        <div style="
-          width: ${24 * scale}px; 
-          height: ${24 * scale}px; 
-          border-radius: 50%; 
-          background: #ef4444;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <svg width="${14 * scale}" height="${14 * scale}" viewBox="0 0 24 24" fill="white" style="transform: rotate(${bus.heading}deg)">
-            <path d="M3 11l19-9-9 19-2-8-8-2z"/>
-          </svg>
-        </div>
+      <div style="position: relative; width: ${36 * scale}px; height: ${36 * scale}px;">
+         <div style="position: absolute; inset: 0; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid ${borderColor};">
+            <svg width="${18 * scale}" height="${18 * scale}" viewBox="0 0 24 24" fill="black"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></svg>
+         </div>
       </div>
     `
-    return L.divIcon({
-      html,
-      className: "bus-marker",
-      iconSize: [48 * scale, 48 * scale],
-      iconAnchor: [24 * scale, 24 * scale],
-    })
+    return L.divIcon({ html, className: "bus-marker", iconSize: [36 * scale, 36 * scale], iconAnchor: [18 * scale, 18 * scale] })
   }
 
   const createUserLocationIcon = () => {
     if (!L) return null
-    const html = `
-      <div style="
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: #3b82f6;
-        border: 4px solid white;
-        box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.5);
-        animation: userPulse 2s infinite;
-      "></div>
-    `
-    return L.divIcon({
-      html,
-      className: "user-location-marker",
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    })
+    const html = `<div style="width: 20px; height: 20px; background: #3b82f6; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 15px #3b82f6;"></div>`
+    return L.divIcon({ html, className: "user-loc", iconSize: [20, 20], iconAnchor: [10, 10] })
   }
 
-  // Load Leaflet CSS
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const existingLink = document.querySelector('link[href*="leaflet.css"]')
-      if (!existingLink) {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        link.crossOrigin = ''
-        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
-        document.head.appendChild(link)
-      }
-    }
-  }, [])
-
-  if (!isClient || !L) {
-    return (
-      <div
-        className={`relative w-full h-full min-h-[400px] ${className} bg-slate-900 rounded-xl flex items-center justify-center`}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading map...</p>
-        </div>
-      </div>
-    )
+  const getTileUrl = () => {
+    if (mapStyle === 'satellite') return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+    if (mapStyle === 'streets') return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+    return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
   }
+
+  if (!isClient || !L) return <div className="bg-slate-900 w-full h-full flex items-center justify-center text-white">Loading Map...</div>
+
+  // Calculated Attributes
+  const userDistance = selectedBus && userLocation
+    ? calculateDistance(userLocation[0], userLocation[1], selectedBus.coordinates[0], selectedBus.coordinates[1])
+    : 0
+
+  const userEta = userDistance > 0 ? Math.round((userDistance / 40) * 60) : 0 // 40km/h avg speed
 
   return (
-    <div
-      id="map-container"
-      className={`relative w-full h-full min-h-[400px] ${className} ${isFullscreen ? "fixed inset-0 z-[9999] min-h-screen" : ""}`}
-    >
+    <div id="map-container" className={`relative w-full h-full min-h-[400px] ${className} ${isFullscreen ? "fixed inset-0 z-[9999]" : ""}`}>
+
       <style jsx global>{`
-        .leaflet-container { 
-          width: 100% !important; 
-          height: 100% !important; 
-          min-height: 400px;
-          border-radius: 0.75rem; 
-          z-index: 0; 
-          background: #1e293b;
-        }
-        .station-marker, .bus-marker, .user-location-marker { 
-          background: transparent !important; 
-          border: none !important; 
-        }
-        .leaflet-div-icon { 
-          background: transparent !important; 
-          border: none !important; 
-        }
-        .leaflet-control-zoom { 
-          display: none !important; 
-        }
-        .leaflet-tile-container img {
-          max-width: none !important;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5); }
-          50% { transform: scale(1.05); box-shadow: 0 4px 24px rgba(239, 68, 68, 0.7); }
-        }
-        @keyframes userPulse {
-          0%, 100% { box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.5); }
-          50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3), 0 4px 20px rgba(59, 130, 246, 0.7); }
-        }
-        #map-container:fullscreen { border-radius: 0; }
-        #map-container:fullscreen .leaflet-container { border-radius: 0; }
+        .leaflet-container { background: ${mapStyle === 'dark' ? '#111' : '#e5e7eb'} !important; }
+        .station-marker, .bus-marker, .user-loc, .destination-marker { background: transparent !important; border: none !important; }
+        .leaflet-control-zoom { display: none !important; }
       `}</style>
 
-      <div style={{ width: "100%", height: "100%", minHeight: "400px", position: "relative" }}>
-        <MapContainer
-          key={`${centerLat}-${centerLng}-${zoom}`} // Force remount on prop changes to avoid reuse issues
-          center={[centerLat, centerLng]}
-          zoom={zoom}
-          style={{ width: "100%", height: "100%", minHeight: "400px", borderRadius: isFullscreen ? "0" : "0.75rem" }}
-          zoomControl={false}
-          ref={(map) => {
-            if (map) {
-              setMapInstance(map)
-              // Invalidate map size after creation with multiple attempts
-              setTimeout(() => {
-                try {
-                  if (map && typeof map.invalidateSize === 'function') {
-                    map.invalidateSize({ animate: true })
-                  }
-                } catch (error) {
-                  console.warn('Map invalidateSize error:', error)
-                }
-              }, 100)
-              setTimeout(() => {
-                try {
-                  if (map && typeof map.invalidateSize === 'function') {
-                    map.invalidateSize({ animate: true })
-                  }
-                } catch (error) {
-                  console.warn('Map invalidateSize retry error:', error)
-                }
-              }, 500)
-            }
-          }}
-        >
-        <MapResizeHandler />
-        <TileLayer
-          url={getTileUrl()}
-          attribution='&copy; <a href="https://www.mapbox.com/">Mapbox</a>'
-          tileSize={512}
-          zoomOffset={-1}
-          maxZoom={19}
-          minZoom={5}
-        />
-
-        {/* Route Lines */}
-        {showRoutes &&
-          routes.map((route) => (
-            <div key={route.id}>
-              <Polyline positions={route.coordinates} pathOptions={{ color: route.color, weight: 8, opacity: 0.3 }} />
-              <Polyline positions={route.coordinates} pathOptions={{ color: route.color, weight: 4, opacity: 0.9 }} />
+      {/* -- Trip Info Card (Floating) -- */}
+      {tripMetadata && destinationName && (
+        <div className={`absolute top-20 left-4 z-[1000] w-80 rounded-2xl p-4 shadow-2xl transition-all duration-300 animate-in slide-in-from-left-4 ${theme === 'light' ? 'bg-white text-slate-900' : 'bg-black/60 backdrop-blur-xl border border-white/10 text-white'}`}>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">Trip to</h3>
+              <div className="text-lg font-bold leading-tight">{destinationName}</div>
             </div>
-          ))}
+            <div className="bg-cyan-500/20 p-2 rounded-full">
+              <Navigation className="w-5 h-5 text-cyan-400" />
+            </div>
+          </div>
 
-        {/* Station Markers */}
-        {stations.map((station) => {
-          const icon = createStationIcon(station)
-          if (!icon) return null
-          return (
-            <Marker
-              key={station.id}
-              position={station.coordinates}
-              icon={icon}
-              eventHandlers={{
-                click: () => {
-                  setSelectedStation(station)
-                  setSelectedBus(null)
-                },
-              }}
-            />
-          )
-        })}
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`p-3 rounded-xl ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'}`}>
+              <div className="flex items-center gap-2 mb-1 opacity-60">
+                <Clock className="w-3 h-3" />
+                <span className="text-xs">Est. Time</span>
+              </div>
+              <div className="text-xl font-bold font-mono">{tripMetadata.duration}</div>
+            </div>
+            <div className={`p-3 rounded-xl ${theme === 'light' ? 'bg-slate-50' : 'bg-white/5'}`}>
+              <div className="flex items-center gap-2 mb-1 opacity-60">
+                <Footprints className="w-3 h-3" />
+                <span className="text-xs">Distance</span>
+              </div>
+              <div className="text-xl font-bold font-mono">{tripMetadata.distance}</div>
+            </div>
+          </div>
 
-        {/* Bus Markers */}
-        {buses.map((bus) => {
-          const icon = createBusIcon(bus, selectedBus?.id === bus.id)
-          if (!icon) return null
-          return (
-            <Marker
-              key={bus.id}
-              position={bus.coordinates}
-              icon={icon}
-              eventHandlers={{
-                click: () => {
-                  setSelectedBus(bus)
-                  setSelectedStation(null)
-                },
-              }}
-            />
-          )
-        })}
-
-        {userLocation && <Marker position={userLocation} icon={createUserLocationIcon()} />}
-
-        <MapControlButtons
-          onFullscreenToggle={handleFullscreenToggle}
-          isFullscreen={isFullscreen}
-          userLocation={userLocation}
-          setUserLocation={setUserLocation}
-        />
-      </MapContainer>
-      </div>
-
-      {/* Map Controls - Left Side */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2 z-[1000]">
-        <div className="flex gap-1 p-1 rounded-lg bg-card/90 backdrop-blur-md border border-border shadow-lg">
-          {(["dark", "streets", "satellite"] as const).map((style) => (
-            <button
-              key={style}
-              onClick={() => setMapStyle(style)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${
-                mapStyle === style
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              }`}
-            >
-              {style}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => setShowRoutes(!showRoutes)}
-          className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-colors shadow-lg ${
-            showRoutes
-              ? "bg-primary text-primary-foreground"
-              : "bg-card/90 backdrop-blur-md border border-border text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Route className="w-3.5 h-3.5" />
-          {showRoutes ? "Hide Routes" : "Show Routes"}
-        </button>
-      </div>
-
-      {/* Route Legend */}
-      <div className="absolute bottom-4 left-4 flex gap-2 flex-wrap z-[1000]">
-        {routes.map((route) => (
-          <div
-            key={route.id}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card/90 backdrop-blur-md border border-border shadow-lg"
+          <button
+            onClick={() => { setDestination(null); setRoutePath(null); setTripMetadata(null); }}
+            className="w-full mt-4 py-2 text-xs font-semibold text-center hover:bg-white/10 rounded-lg transition-colors opacity-60 hover:opacity-100"
           >
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: route.color }} />
-            <span className="text-xs font-medium text-foreground">{route.name}</span>
+            Clear Route
+          </button>
+        </div>
+      )}
+
+      <MapContainer
+        center={[centerLat, centerLng]} zoom={zoom} zoomControl={false}
+        style={{ width: "100%", height: "100%", borderRadius: isFullscreen ? "0" : "1rem" }}
+      >
+        <MapResizeHandler />
+        <MapEventHandler
+          setUserLocation={setUserLocation}
+          setDestination={setDestination}
+          setDestinationName={setDestinationName}
+          setRoutePath={setRoutePath}
+          setTripMetadata={setTripMetadata}
+        />
+        <TileLayer url={getTileUrl()} tileSize={512} zoomOffset={-1} maxZoom={19} />
+
+        {/* Routes Display */}
+        {/* Destination Route */}
+        {routePath && (
+          <>
+            <Polyline positions={routePath} pathOptions={{ color: theme === 'dark' ? '#00f2ff' : '#2563eb', weight: 8, opacity: 0.3, lineCap: 'round' }} />
+            <Polyline positions={routePath} pathOptions={{ color: theme === 'dark' ? '#fff' : '#1d4ed8', weight: 4, opacity: 0.9, lineCap: 'round', dashArray: theme === 'light' ? '1, 10' : undefined }} />
+          </>
+        )}
+
+
+        {/* Bus Routes */}
+        {routes.map((route) => (
+          <div key={route.id}>
+            {/* Neon Glow Only in Dark Mode */}
+            {mapStyle === 'dark' && (
+              <>
+                <Polyline positions={route.coordinates} pathOptions={{ color: route.color, weight: 12, opacity: 0.1, lineCap: 'round' }} />
+                <Polyline positions={route.coordinates} pathOptions={{ color: route.color, weight: 6, opacity: 0.3, lineCap: 'round' }} />
+              </>
+            )}
+            <Polyline positions={route.coordinates} pathOptions={{ color: mapStyle === 'dark' ? '#fff' : route.color, weight: 3, opacity: 0.9 }} />
           </div>
         ))}
-      </div>
 
-      {/* Status Panel */}
-      <div className="absolute top-4 right-16 z-[1000]">
-        <div className="p-3 rounded-lg bg-card/90 backdrop-blur-md border border-border shadow-lg space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs text-foreground font-medium">Online</span>
-            <span className="text-xs text-muted-foreground ml-2">
-              {buses.filter((b) => b.status === "moving").length} Buses
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Lock className="w-3 h-3" />
-            <span>Locked</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <ArrowRight className="w-3 h-3 text-green-500" />
-            <span>Terminal</span>
-          </div>
-          {userLocation && (
-            <div className="flex items-center gap-2 text-xs text-blue-500">
-              <div className="w-3 h-3 rounded-full bg-blue-500" />
-              <span>Your Location</span>
-            </div>
-          )}
-        </div>
-      </div>
+        {/* Map Objects */}
+        {destination && (
+          <Marker position={destination} icon={L.divIcon({
+            html: `<div style="font-size: 24px;">📍</div>`,
+            className: 'destination-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+          })} />
+        )}
+        {stations.map(st => <Marker key={st.id} position={st.coordinates} icon={createStationIcon(st)} eventHandlers={{ click: () => { setSelectedStation(st); setSelectedBus(null) } }} />)}
+        {buses.map(bus => <Marker key={bus.id} position={bus.coordinates} icon={createBusIcon(bus, selectedBus?.id === bus.id)} eventHandlers={{ click: () => { setSelectedBus(bus); setSelectedStation(null) } }} />)}
+        {userLocation && <Marker position={userLocation} icon={createUserLocationIcon()} />}
 
-      {/* Selected Bus Info */}
-      {selectedBus && (
-        <div className="absolute bottom-4 right-4 w-80 z-[1000]">
-          <div className="p-4 rounded-xl bg-card/95 backdrop-blur-md border border-border shadow-2xl">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center border-4 border-red-500 bg-white">
-                  <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                    <Bus className="w-3 h-3 text-white" />
+        {showControls && (
+          <MapControlButtons
+            onFullscreenToggle={handleFullscreenToggle} isFullscreen={isFullscreen}
+            userLocation={userLocation} setUserLocation={setUserLocation}
+            setMapStyle={setMapStyle}
+          />
+        )}
+      </MapContainer>
+
+      {/* Bottom Sheet - Bus Info */}
+      {selectedBus && isClient && (
+        <BottomSheetWrapper isFullscreen={isFullscreen}>
+          <div className="fixed bottom-0 left-0 right-0 z-[9999] animate-in slide-in-from-bottom duration-300 pointer-events-none flex justify-center">
+            <div className="w-full md:max-w-md md:mb-6 pointer-events-auto">
+              {/* Driver Card - Dark header */}
+              <div className={`mx-4 mb-3 p-4 rounded-2xl shadow-2xl ${theme === 'light' ? 'bg-slate-800' : 'bg-slate-900'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                      <Bus className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-lg">{selectedBus.name}</h3>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star} className="text-yellow-400 text-xs">★</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        if (userLocation && selectedBus) {
+                          const busCoords: [number, number] = [selectedBus.coordinates[0], selectedBus.coordinates[1]]
+                          setDestination(busCoords)
+                          setDestinationName(selectedBus.name)
+                          await calculateRoute(userLocation, busCoords)
+                          toast.success(`Route traced to ${selectedBus.name}`)
+                        } else if (!userLocation) {
+                          // Try to get user location first
+                          if (navigator.geolocation) {
+                            toast.loading("Getting your location...")
+                            navigator.geolocation.getCurrentPosition(
+                              async (position) => {
+                                const loc: [number, number] = [position.coords.latitude, position.coords.longitude]
+                                setUserLocation(loc)
+                                if (selectedBus) {
+                                  const busCoords: [number, number] = [selectedBus.coordinates[0], selectedBus.coordinates[1]]
+                                  setDestination(busCoords)
+                                  setDestinationName(selectedBus.name)
+                                  await calculateRoute(loc, busCoords)
+                                  toast.success(`Route traced to ${selectedBus.name}`)
+                                }
+                              },
+                              () => toast.error("Could not get your location"),
+                              { enableHighAccuracy: true, timeout: 5000 }
+                            )
+                          }
+                        }
+                      }}
+                      className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                      title="Trace route to this bus"
+                    >
+                      <MapPin className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedBus(null)}
+                      className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-foreground">{selectedBus.name}</h4>
-                  <span
-                    className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                    style={{ backgroundColor: selectedBus.routeColor }}
+              </div>
+
+              {/* Info Card - Light body */}
+              <div className={`mx-4 mb-4 rounded-2xl shadow-2xl overflow-hidden ${theme === 'light' ? 'bg-white' : 'bg-slate-800'}`}>
+                {/* ETA Section */}
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-pink-500 flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className={`text-xl font-bold ${theme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                        Arrival: {selectedBus.eta}
+                      </p>
+                      <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Distance from you: <span className="text-pink-500 font-semibold">{userDistance.toFixed(1)} km</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 ml-16">
+                    <span className={`px-3 py-1 rounded-full text-sm ${theme === 'light' ? 'bg-slate-100 text-slate-600' : 'bg-slate-700 text-slate-300'}`}>
+                      {selectedBus.route}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm ${theme === 'light' ? 'bg-emerald-100 text-emerald-600' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                      On Route
+                    </span>
+                  </div>
+                </div>
+
+                {/* Destination Section */}
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <Navigation className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-bold text-lg ${theme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                        {selectedBus.nextStop}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${theme === 'light' ? 'bg-slate-100' : 'bg-slate-700'}`}>
+                          <Gauge className="w-4 h-4 text-emerald-500" />
+                          <span className={`text-sm font-medium ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>{selectedBus.speed} km/h</span>
+                        </div>
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${theme === 'light' ? 'bg-slate-100' : 'bg-slate-700'}`}>
+                          <Users className="w-4 h-4 text-orange-500" />
+                          <span className={`text-sm font-medium ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>{selectedBus.passengers}% full</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="p-4 pt-0">
+                  <button
+                    onClick={() => setShowSchedule(true)}
+                    className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all"
                   >
-                    {selectedBus.route}
-                  </span>
+                    View Full Schedule • Track Bus
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedBus(null)}
-                className="p-1.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> Status
-                </p>
-                <p className="text-sm font-bold text-foreground capitalize flex items-center gap-1.5 mt-1">
-                  <span
-                    className={`w-2 h-2 rounded-full ${selectedBus.status === "moving" ? "bg-emerald-500 animate-pulse" : selectedBus.status === "stopped" ? "bg-amber-500" : "bg-blue-500"}`}
-                  />
-                  {selectedBus.status}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Gauge className="w-3 h-3" /> Speed
-                </p>
-                <p className="text-sm font-bold text-foreground mt-1">{selectedBus.speed} km/h</p>
-              </div>
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Users className="w-3 h-3" /> Passengers
-                </p>
-                <p className="text-sm font-bold text-foreground mt-1">{selectedBus.passengers}/60</p>
-              </div>
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> ETA
-                </p>
-                <p className="text-sm font-bold text-foreground mt-1">{selectedBus.eta}</p>
-              </div>
-            </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/20">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Next Stop</p>
-              <p className="text-sm font-bold text-foreground mt-1">{selectedBus.nextStop}</p>
             </div>
           </div>
-        </div>
+        </BottomSheetWrapper>
       )}
 
-      {/* Selected Station Info */}
-      {selectedStation && !selectedBus && (
-        <div className="absolute bottom-4 right-4 w-80 z-[1000]">
-          <div className="p-4 rounded-xl bg-card/95 backdrop-blur-md border border-border shadow-2xl">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center border-4"
-                  style={{ borderColor: labelColors[selectedStation.labelColor].bg }}
-                >
-                  {selectedStation.status === "locked" ? (
-                    <Lock className="w-5 h-5 text-gray-500" />
-                  ) : selectedStation.type === "terminal" ? (
-                    <ArrowRight className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <Square className="w-4 h-4 text-gray-400" />
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-bold text-foreground">{selectedStation.name}</h4>
-                  <p className="text-xs text-muted-foreground capitalize">{selectedStation.type} Station</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedStation(null)}
-                className="p-1.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Status</p>
-                <p className="text-sm font-bold text-foreground capitalize mt-1 flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${selectedStation.status === "active" ? "bg-green-500" : selectedStation.status === "locked" ? "bg-gray-400" : "bg-red-500 animate-pulse"}`}
-                  />
-                  {selectedStation.status}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-accent/50">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Routes</p>
-                <div className="flex flex-wrap gap-1">
-                  {selectedStation.routes.map((route) => {
-                    const routeData = routes.find((r) => r.name === route)
-                    return (
-                      <span
-                        key={route}
-                        className="px-2 py-1 rounded-full text-xs font-medium text-white"
-                        style={{ backgroundColor: routeData?.color || "#666" }}
-                      >
-                        {route}
-                      </span>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+
+      {/* Schedule Modal */}
+      <ScheduleModal
+        isOpen={showSchedule}
+        onClose={() => setShowSchedule(false)}
+        busName={selectedBus?.name}
+      />
+    </div >
   )
 }
 
-// The following component was removed as it was not being used and its functionality was integrated into the main MapboxMap component.
-// function StationsAndBusesOverlay({
-//   stations,
-//   buses,
-//   selectedBus,
-//   onSelectBus,
-//   onSelectStation,
-// }: {
-//   stations: StationData[]
-//   buses: BusData[]
-//   selectedBus: BusData | null
-//   onSelectBus: (bus: BusData) => void
-//   onSelectStation: (station: StationData) => void
-// }) {
-//   const [markers, setMarkers] = useState<React.ReactNode[]>([])
-
-//   useEffect(() => {
-//     // Import Leaflet and create markers
-//     const loadMarkers = async () => {
-//       const L = (await import("leaflet")).default
-//       const { useMap } = await import("react-leaflet")
-
-//       // Markers will be handled by the parent map component
-//     }
-//     loadMarkers()
-//   }, [stations, buses])
-
-//   return null // Markers are handled by Leaflet's native components
-// }
-
-export { stations, routes, initialBuses as buses }

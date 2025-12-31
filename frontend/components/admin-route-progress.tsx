@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Navigation, MapPin, Clock, Users, ChevronLeft, ChevronRight, Circle, CheckCircle2, Loader2, Bus } from "lucide-react"
+import { Navigation, MapPin, Clock, Users, ChevronLeft, ChevronRight, Check, Route, RefreshCcw } from "lucide-react"
 
 export function AdminRouteProgress() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -57,7 +57,7 @@ export function AdminRouteProgress() {
   const currentRoute = routes[currentIndex]
   const completedStops = currentRoute.stops.filter(s => s.status === "completed").length
   const totalStops = currentRoute.stops.length
-  const progress = (completedStops / totalStops) * 100
+  const progress = Math.round((completedStops / totalStops) * 100)
 
   const nextRoute = () => {
     setCurrentIndex((prev) => (prev + 1) % routes.length)
@@ -67,176 +67,139 @@ export function AdminRouteProgress() {
     setCurrentIndex((prev) => (prev - 1 + routes.length) % routes.length)
   }
 
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string; light: string; gradient: string }> = {
-      blue: {
-        bg: "bg-blue-500",
-        text: "text-blue-600 dark:text-blue-400",
-        border: "border-blue-200 dark:border-blue-800",
-        light: "bg-blue-50 dark:bg-blue-950/50",
-        gradient: "from-blue-500 to-blue-600"
-      },
-      emerald: {
-        bg: "bg-emerald-500",
-        text: "text-emerald-600 dark:text-emerald-400",
-        border: "border-emerald-200 dark:border-emerald-800",
-        light: "bg-emerald-50 dark:bg-emerald-950/50",
-        gradient: "from-emerald-500 to-emerald-600"
-      },
-      violet: {
-        bg: "bg-violet-500",
-        text: "text-violet-600 dark:text-violet-400",
-        border: "border-violet-200 dark:border-violet-800",
-        light: "bg-violet-50 dark:bg-violet-950/50",
-        gradient: "from-violet-500 to-violet-600"
-      }
-    }
-    return colors[color] || colors.blue
-  }
-
-  const colorClasses = getColorClasses(currentRoute.color)
-
   return (
-    <div className="space-y-4">
-      {/* Header with navigation */}
+    <div className="space-y-6 font-sans">
+
+      {/* 1. Header Section */}
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+          <Route className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Live Routes</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Active bus tracking</p>
+        </div>
+      </div>
+
+      {/* 2. Route Selector Navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorClasses.gradient} flex items-center justify-center shadow-sm`}>
-            <Bus className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shrink-0">
+            <BusIcon />
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{currentRoute.name}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{currentRoute.busNumber}</p>
+            <h4 className="font-bold text-slate-800 dark:text-white text-base">{currentRoute.name}</h4>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{currentRoute.busNumber}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={prevRoute}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-          >
+        {/* Pagination Controls */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          <button onClick={prevRoute} className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all text-slate-500">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums min-w-[40px] text-center">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 px-2">
             {currentIndex + 1}/{routes.length}
           </span>
-          <button
-            onClick={nextRoute}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-          >
+          <button onClick={nextRoute} className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all text-slate-500">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Status and Progress */}
-      <div className={`p-4 rounded-xl ${colorClasses.light} border ${colorClasses.border}`}>
+      {/* 3. Progress Overview Card */}
+      <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-2xl p-4 sm:p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Progress</span>
-            <span className={`text-sm font-bold ${colorClasses.text}`}>{Math.round(progress)}%</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Progress</span>
+            <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{progress}%</span>
           </div>
-          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-            currentRoute.status === "on-time"
-              ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400"
-              : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              currentRoute.status === "on-time" ? "bg-emerald-500" : "bg-amber-500"
-            }`} />
-            {currentRoute.status === "on-time" ? "On Time" : "Delayed"}
+          <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${currentRoute.status === 'on-time'
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+              : "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+            }`}>
+            <span className={`w-2 h-2 rounded-full ${currentRoute.status === 'on-time' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            {currentRoute.status === 'on-time' ? 'On Time' : 'Delayed'}
           </div>
         </div>
-        
-        {/* Progress bar */}
-        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 bg-gradient-to-r ${colorClasses.gradient}`}
-            style={{ width: `${progress}%` }}
-          />
+
+        {/* Bar */}
+        <div className="h-2.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-4">
+          <div className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
         </div>
-        
-        <div className="flex items-center justify-between mt-3 text-sm text-slate-600 dark:text-slate-400">
+
+        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
           <span>{completedStops} of {totalStops} stops completed</span>
-          <div className="flex items-center gap-1.5">
-            <Users className="w-4 h-4" />
-            <span>{currentRoute.passengers}/{currentRoute.capacity}</span>
+          <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+            <Users className="w-4 h-4 text-slate-400" />
+            {currentRoute.passengers}/{currentRoute.capacity}
           </div>
         </div>
       </div>
 
-      {/* Stops List */}
-      <div className="space-y-1">
+      {/* 4. Vertical Timeline */}
+      <div className="relative pl-2 pt-2 space-y-0">
         {currentRoute.stops.map((stop, index) => {
           const isCompleted = stop.status === "completed"
           const isActive = stop.status === "active"
+          const isLast = index === currentRoute.stops.length - 1
 
           return (
-            <div
-              key={index}
-              className={`relative flex items-center gap-3 p-3 rounded-xl transition-all ${
-                isActive
-                  ? `${colorClasses.light} border ${colorClasses.border}`
-                  : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-              }`}
-            >
-              {/* Timeline connector */}
-              {index < currentRoute.stops.length - 1 && (
-                <div className={`absolute left-[26px] top-[42px] w-0.5 h-6 ${
-                  isCompleted ? colorClasses.bg : "bg-slate-200 dark:bg-slate-700"
-                }`} />
+            <div key={index} className="relative flex gap-4 pb-8 last:pb-0">
+              {/* Vertical Line Connector */}
+              {!isLast && (
+                <div className={`absolute left-[15px] top-[30px] bottom-0 w-0.5 ${isCompleted ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700"
+                  }`} />
               )}
 
-              {/* Status icon */}
-              <div className="relative z-10 flex-shrink-0">
-                {isCompleted && (
-                  <div className={`w-8 h-8 rounded-full ${colorClasses.bg} flex items-center justify-center`}>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
+              {/* Node Icon */}
+              <div className="relative z-10 shrink-0">
+                {isCompleted ? (
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center border-4 border-white dark:border-slate-950 shadow-sm">
+                    <Check className="w-4 h-4 text-white" />
                   </div>
-                )}
-                {isActive && (
-                  <div className="relative">
-                    <div className={`absolute inset-0 w-8 h-8 rounded-full ${colorClasses.bg} animate-ping opacity-25`} />
-                    <div className={`relative w-8 h-8 rounded-full ${colorClasses.bg} flex items-center justify-center`}>
-                      <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    </div>
+                ) : isActive ? (
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center border-4 border-white dark:border-slate-950 shadow-md ring-4 ring-blue-50 dark:ring-blue-900/20">
+                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
                   </div>
-                )}
-                {!isCompleted && !isActive && (
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 flex items-center justify-center">
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{index + 1}</span>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                    <span className="text-xs font-bold text-slate-400">{index + 1}</span>
                   </div>
                 )}
               </div>
 
-              {/* Stop info */}
-              <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${
-                  isActive
-                    ? "text-slate-900 dark:text-white"
-                    : isCompleted
-                      ? "text-slate-700 dark:text-slate-300"
-                      : "text-slate-500 dark:text-slate-400"
-                }`}>
-                  {stop.name}
-                </p>
-                <p className={`text-xs ${
-                  isActive ? colorClasses.text + " font-medium" : "text-slate-500 dark:text-slate-400"
-                }`}>
-                  {isActive ? "Arriving in 5 min" : isCompleted ? `Departed ${stop.time}` : `Scheduled ${stop.time}`}
-                </p>
+              {/* Content */}
+              <div className={`flex-1 pt-1 ${isActive ? "bg-blue-50 dark:bg-blue-900/10 -m-3 p-3 rounded-xl border border-blue-100 dark:border-blue-800/30" : ""}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className={`font-bold ${isActive ? "text-slate-900 dark:text-white text-base" : "text-slate-700 dark:text-slate-300"}`}>
+                      {stop.name}
+                    </h5>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {isCompleted ? `Departed ${stop.time}` : isActive ? `Arriving in 5 min` : `Scheduled ${stop.time}`}
+                    </p>
+                  </div>
+                  {isActive && (
+                    <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm shadow-blue-500/30">
+                      Current
+                    </span>
+                  )}
+                </div>
               </div>
-
-              {/* Current badge */}
-              {isActive && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorClasses.bg} text-white`}>
-                  Current
-                </span>
-              )}
             </div>
           )
         })}
       </div>
+
     </div>
+  )
+}
+
+function BusIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 16C4 16.88 4.39 17.67 5 18.22V20C5 20.55 5.45 21 6 21H7C7.55 21 8 20.55 8 20V19H16V20C16 20.55 16.45 21 17 21H18C18.55 21 19 20.55 19 20V18.22C19.61 17.67 20 16.88 20 16V6C20 2.5 16.42 2 12 2C7.58 2 4 2.5 4 6V16ZM7.5 17C6.67 17 6 16.33 6 15.5C6 14.67 6.67 14 7.5 14C8.33 14 9 14.67 9 15.5C9 16.33 8.33 17 7.5 17ZM16.5 17C15.67 17 15 16.33 15 15.5C15 14.67 15.67 14 16.5 14C17.33 14 18 14.67 18 15.5C18 16.33 17.33 17 16.5 17ZM5.5 6H18.5V11H5.5V6Z" fill="currentColor" />
+    </svg>
   )
 }

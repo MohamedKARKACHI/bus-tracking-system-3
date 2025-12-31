@@ -20,7 +20,7 @@ export function BusMap({
   className = "",
 }: BusMapProps) {
   return (
-    <div className={`relative w-full ${className}`} style={{ height, minHeight: '400px' }}>
+    <div className={`relative w-full ${className}`} style={{ height }}>
       <MapboxMap
         fullScreen={showControls}
         showControls={showControls}
