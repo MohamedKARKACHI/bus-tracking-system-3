@@ -136,7 +136,7 @@ export const getCameraStatus = async (): Promise<{ running: boolean; last_detect
 
 // Backend Integration (Java Spring Boot)
 export const savePlateDetection = async (detection: DetectionResponse, type: 'CHECK_IN' | 'CHECK_OUT'): Promise<boolean> => {
-    const BACKEND_URL = 'http://localhost:8080/api/license-plate';
+    const BACKEND_URL = 'http://localhost:4000/api/license-plate';
 
     try {
         const endpoint = type === 'CHECK_IN' ? 'checkin' : 'checkout';

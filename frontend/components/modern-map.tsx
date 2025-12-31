@@ -60,9 +60,10 @@ export default function SimulationMap({
             const stopsData = await stopsRes.json()
             const routesData = await routesRes.json()
 
-            setBuses(busesData)
-            setStops(stopsData)
-            setRoutes(routesData)
+            // Defensive type checks - API may return error objects
+            if (Array.isArray(busesData)) setBuses(busesData)
+            if (Array.isArray(stopsData)) setStops(stopsData)
+            if (Array.isArray(routesData)) setRoutes(routesData)
         } catch (error) {
             console.error('Error fetching map data:', error)
         }
@@ -175,7 +176,7 @@ export default function SimulationMap({
 
     // Add animated route lines
     useEffect(() => {
-        if (!map.current || !mapLoaded || routes.length === 0) return
+        if (!map.current || !mapLoaded || !Array.isArray(routes) || routes.length === 0) return
 
         routes.forEach((route, index) => {
             if (!route.coordinates || route.coordinates.length < 2) return
@@ -278,7 +279,7 @@ export default function SimulationMap({
 
     // Add animated bus markers
     useEffect(() => {
-        if (!map.current || !mapLoaded || buses.length === 0) return
+        if (!map.current || !mapLoaded || !Array.isArray(buses) || buses.length === 0) return
 
         // Clear existing markers if filtering changes
         if (selectedRouteId) {
@@ -430,7 +431,7 @@ export default function SimulationMap({
 
     // Add stop markers with glow
     useEffect(() => {
-        if (!map.current || !mapLoaded || stops.length === 0) return
+        if (!map.current || !mapLoaded || !Array.isArray(stops) || stops.length === 0) return
 
         // Clear existing markers if filtering changes (not strictly necessary for stops as we recreate them mostly, but good practice)
         // For simplicity, we'll just rely on the fact that we're iterating stops. 

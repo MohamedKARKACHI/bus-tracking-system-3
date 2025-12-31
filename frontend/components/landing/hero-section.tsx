@@ -72,7 +72,7 @@ export function HeroSection() {
               </h1>
 
               <p className="text-lg sm:text-xl text-muted-foreground dark:text-slate-300 max-w-2xl leading-relaxed">
-                Experience seamless bus travel across <span className="font-semibold text-cyan-500">Marrakech</span>, <span className="font-semibold text-blue-500">Casablanca</span> & <span className="font-semibold text-purple-500">Tangier</span>. Real-time tracking, instant booking, live updates.
+                Experience seamless bus travel across <span className="font-semibold text-cyan-500">Marrakech</span>, <span className="font-semibold text-blue-500">Casablanca</span> & <span className="font-semibold text-purple-500">Tangier</span>. Now with <span className="text-foreground dark:text-white font-bold">Live Tracking</span> and <span className="text-foreground dark:text-white font-bold">Smart ETA</span>.
               </p>
             </div>
 
