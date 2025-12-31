@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const role = searchParams.get('role')
 
-    let query = 'SELECT id, name, email, role, phone, created_at FROM users'
+    let query = 'SELECT id, first_name, last_name, email, role, phone, created_at FROM users'
     const params: any[] = []
 
     if (role) {

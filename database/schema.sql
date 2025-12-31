@@ -37,26 +37,6 @@ CREATE TABLE IF NOT EXISTS drivers (
     INDEX idx_license (license_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Buses Table
-CREATE TABLE IF NOT EXISTS buses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    bus_number VARCHAR(50) NOT NULL UNIQUE,
-    plate_number VARCHAR(20) NOT NULL UNIQUE,
-    model VARCHAR(100) NOT NULL,
-    capacity INT NOT NULL,
-    year INT NOT NULL,
-    status ENUM('active', 'maintenance', 'out_of_service') DEFAULT 'active',
-    last_maintenance DATE,
-    next_maintenance DATE,
-    fuel_type ENUM('diesel', 'electric', 'hybrid', 'cng') DEFAULT 'diesel',
-    current_driver_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (current_driver_id) REFERENCES drivers(id) ON DELETE SET NULL,
-    INDEX idx_status (status),
-    INDEX idx_bus_number (bus_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Routes Table
 CREATE TABLE IF NOT EXISTS routes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -87,6 +67,29 @@ CREATE TABLE IF NOT EXISTS route_stops (
     INDEX idx_route_id (route_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Buses Table
+CREATE TABLE IF NOT EXISTS buses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bus_number VARCHAR(50) NOT NULL UNIQUE,
+    plate_number VARCHAR(20) NOT NULL UNIQUE,
+    model VARCHAR(100) NOT NULL,
+    capacity INT NOT NULL,
+    year INT NOT NULL,
+    status ENUM('active', 'maintenance', 'out_of_service') DEFAULT 'active',
+    last_maintenance DATE,
+    next_maintenance DATE,
+    fuel_type ENUM('diesel', 'electric', 'hybrid', 'cng') DEFAULT 'diesel',
+    current_driver_id INT,
+    route_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (current_driver_id) REFERENCES drivers(id) ON DELETE SET NULL,
+    FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE SET NULL,
+    INDEX idx_status (status),
+    INDEX idx_bus_number (bus_number),
+    INDEX idx_route_id (route_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Schedules Table
 CREATE TABLE IF NOT EXISTS schedules (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -114,10 +117,10 @@ CREATE TABLE IF NOT EXISTS tickets (
     user_id INT NOT NULL,
     schedule_id INT NOT NULL,
     seat_number VARCHAR(10),
-    boarding_stop_id INT NOT NULL,
-    destination_stop_id INT NOT NULL,
+    boarding_stop_id INT,
+    destination_stop_id INT,
     fare DECIMAL(10,2) NOT NULL,
-    status ENUM('booked', 'confirmed', 'cancelled', 'used') DEFAULT 'booked',
+    status ENUM('booked', 'confirmed', 'cancelled', 'used', 'pending') DEFAULT 'booked',
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     payment_status ENUM('pending', 'paid', 'refunded') DEFAULT 'pending',
     payment_method ENUM('cash', 'card', 'mobile', 'wallet') DEFAULT 'card',
@@ -227,4 +230,19 @@ CREATE TABLE IF NOT EXISTS performance_metrics (
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE,
     INDEX idx_driver_id (driver_id),
     INDEX idx_date (date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Plate Detections Table
+CREATE TABLE IF NOT EXISTS plate_detections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plate_number VARCHAR(255) NOT NULL,
+    serial_number VARCHAR(255),
+    arabic_letter VARCHAR(255),
+    region_code VARCHAR(255),
+    event_type ENUM('CHECK_IN', 'CHECK_OUT') NOT NULL,
+    confidence FLOAT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_plate_number (plate_number),
+    INDEX idx_event_type (event_type),
+    INDEX idx_timestamp (timestamp)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

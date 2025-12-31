@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { GoogleOAuthProvider } from "@react-oauth/google"
+import { Providers } from "@/components/providers"
 import "./globals.css"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "leaflet/dist/leaflet.css"
@@ -29,13 +30,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
-        {isGoogleOAuthEnabled ? (
-          <GoogleOAuthProvider clientId={googleClientId}>
+        <Providers attribute="class" defaultTheme="system" enableSystem>
+          {isGoogleOAuthEnabled ? (
+            <GoogleOAuthProvider clientId={googleClientId}>
+              <AuthProvider>{children}</AuthProvider>
+            </GoogleOAuthProvider>
+          ) : (
             <AuthProvider>{children}</AuthProvider>
-          </GoogleOAuthProvider>
-        ) : (
-          <AuthProvider>{children}</AuthProvider>
-        )}
+          )}
+        </Providers>
       </body>
     </html>
   )

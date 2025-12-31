@@ -26,8 +26,8 @@ export default function SignupPage() {
   const { user, isLoading: authLoading, loginWithGoogle } = useAuth()
 
   // Check if Google OAuth is enabled
-  const isGoogleOAuthEnabled = typeof window !== 'undefined' && 
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && 
+  const isGoogleOAuthEnabled = typeof window !== 'undefined' &&
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID &&
     !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID.includes('your_google_client_id_here')
 
   // Redirect if already logged in
@@ -131,7 +131,7 @@ export default function SignupPage() {
       if (!credentialResponse.credential) {
         throw new Error("No credential received from Google")
       }
-      
+
       const user = await loginWithGoogle(credentialResponse.credential)
       router.push("/client-portal")
     } catch (err: any) {
@@ -166,19 +166,21 @@ export default function SignupPage() {
           </div>
 
           {/* Google Signup Button */}
-          <div className="w-full flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSignup}
-              onError={() => {
-                setError("Google signup failed. Please try again.")
-              }}
-              theme="outline"
-              size="large"
-              text="signup_with"
-              shape="rectangular"
-              width="384"
-            />
-          </div>
+          {isGoogleOAuthEnabled && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+            <div className="w-full flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSignup}
+                onError={() => {
+                  setError("Google signup failed. Please try again.")
+                }}
+                theme="outline"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                width="384"
+              />
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative">
